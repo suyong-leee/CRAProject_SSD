@@ -1,5 +1,6 @@
 #include "gmock/gmock.h"
 #include <string>
+#include <string>
 #include <fstream>
 
 using namespace testing;
@@ -55,6 +56,17 @@ private:
 		error.close();
 	}
 };
+
+std::vector<std::string> parseArguments(int argc, char* argv[])
+{
+	std::vector<std::string> args;
+	for (int i = 1; i < argc; ++i) 
+	{
+		args.emplace_back(argv[i]);
+	}
+	return args;
+
+}
 
 TEST(a, b)
 {
@@ -127,4 +139,62 @@ TEST(RunCommand, ReadCommand)
 
 	EXPECT_CALL(mockSsdDriver, read(20));
 	mockSsdDriver.run(args);
+}
+
+
+TEST(ArgumentParsing, EmptyArgument)
+{
+	int argc = 1;
+	char* argv[1];
+
+	char exec[] = "ssd.exe";
+
+	argv[0] = exec;
+
+	std::vector<std::string> args = parseArguments(argc, argv);
+
+	ASSERT_EQ(args.size(), 0);
+}
+
+TEST(ArgumentParsing, WriteArgument)
+{
+	int argc = 4;
+	char* argv[4];
+
+	char exec[] = "ssd.exe";
+	char type[] = "W";
+	char address[] = "20";
+	char value[] = "0x1289CDEF";
+
+	argv[0] = exec;
+	argv[1] = type;
+	argv[2] = address;
+	argv[3] = value;
+
+	std::vector<std::string> args = parseArguments(argc, argv);
+
+	ASSERT_EQ(args.size(), 3);
+	EXPECT_EQ(args[0], "W");
+	EXPECT_EQ(args[1], "20");
+	EXPECT_EQ(args[2], "0x1289CDEF");
+}
+
+TEST(ArgumentParsing, ReadArgument)
+{
+	int argc = 3;
+	char* argv[3];
+
+	char exec[] = "ssd.exe";
+	char type[] = "R";
+	char address[] = "20";
+
+	argv[0] = exec;
+	argv[1] = type;
+	argv[2] = address;
+
+	std::vector<std::string> args = parseArguments(argc, argv);
+
+	ASSERT_EQ(args.size(), 2);
+	EXPECT_EQ(args[0], "R");
+	EXPECT_EQ(args[1], "20");
 }
