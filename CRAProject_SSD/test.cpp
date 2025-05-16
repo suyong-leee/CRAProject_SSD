@@ -11,7 +11,22 @@ int ssdMap[100];
 
 class SSDDriver {
 public:
-	void write(int addr, string value) {
+	virtual void run(std::vector<std::string> args)
+	{
+		std::string command = args[0];
+		if (command == "W")
+		{
+			int addr = stoi(args[1]);
+			std::string value = args[2];
+			write(addr, value);
+		}
+		else if (command == "R")
+		{
+			int addr = stoi(args[1]);
+			read(addr);
+		}
+	}
+	virtual void write(int addr, string value) {
 		if (addr < 0 || addr >= 100) {
 			makeError();
 			return;
@@ -24,7 +39,7 @@ public:
 	    nand << value;
 		nand.close();
 	}
-	int read(int addr) {
+	virtual int read(int addr) {
 		return ssdMap[addr];
 	}
 private:
@@ -88,4 +103,28 @@ TEST(SSDdrvierTest, TC4WriteInWrongPosition)
 	
 	//TODO: check value by read function
 	EXPECT_EQ(1, 1);
+}
+
+class MockSSDDriver : public SSDDriver {
+public:
+	MOCK_METHOD(void, write, (int addr, std::string value), (override));
+	MOCK_METHOD(int, read, (int addr), (override));
+};
+
+TEST(RunCommand, WriteCommand)
+{
+	MockSSDDriver mockSsdDriver;
+	std::vector<std::string> args = { "W", "20", "1423" };
+
+	EXPECT_CALL(mockSsdDriver, write(20, "1423"));
+	mockSsdDriver.run(args);
+}
+
+TEST(RunCommand, ReadCommand)
+{
+	MockSSDDriver mockSsdDriver;
+	std::vector<std::string> args = { "R", "20"};
+
+	EXPECT_CALL(mockSsdDriver, read(20));
+	mockSsdDriver.run(args);
 }
