@@ -19,3 +19,8 @@ TEST(a, b)
 {
 	EXPECT_EQ(1, 1);
 }
+
+TEST(SSDdrvierTest, TC1)
+{
+	EXPECT_EQ(1, 1);
+}
