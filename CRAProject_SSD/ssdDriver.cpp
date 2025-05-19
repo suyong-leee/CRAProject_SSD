@@ -29,6 +29,28 @@ public:
 			makeError();
 			return;
 		}
+		if (value.find("0x", 0) == string::npos) {
+			makeError();
+			return;
+		}
+		if (value.size() != 10) {
+			makeError();
+			return;
+		}
+
+		int arrayIdx;
+		int validNumIdx;
+		for (arrayIdx = 2; arrayIdx < 10; arrayIdx++) {
+			for (validNumIdx = 0; validNumIdx < 16;validNumIdx++) {
+				if (validNunber[validNumIdx] == value[arrayIdx]) {
+					break;
+				}
+			}
+			if (validNumIdx == 16) {
+				makeError();
+				return;
+			}
+		}
 
 		streampos writeOffset = (10 * addr);
 
@@ -78,6 +100,7 @@ public:
 private:
 	fstream nand;
 	const string nandFileName = "ssd_nand.txt";
+	const string validNunber = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
 	void makeError(void) {
 		ofstream error("output.txt");
