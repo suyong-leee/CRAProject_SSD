@@ -4,47 +4,48 @@
 using namespace testing;
 using namespace std;
 
-TEST(SSDdrvierTest, TC1correctWrite)
-{
-	SSDDriver ssdDriver;
+class SddDriverTestFixture : public Test {
+protected:
+	void SetUp() override {
+		ssdDriver = new SSDDriver;
+	}
+public:
+	SSDDriver * ssdDriver;
+};
 
-	ssdDriver.write(0, "0x11111111");
-	string data = ssdDriver.read(0);
+TEST_F(SddDriverTestFixture, TC1correctWrite)
+{
+	ssdDriver->write(0, "0x11111111");
+	string data = ssdDriver->read(0);
 
 	EXPECT_EQ("0x11111111", data);
 }
 
-TEST(SSDdrvierTest, TC2correctWriteSeveralTimes)
+TEST_F(SddDriverTestFixture, TC2correctWriteSeveralTimes)
 {
-	SSDDriver ssdDriver;
-
 	for (int i = 0;i < 10;i++) {
-		ssdDriver.write(i, "0x12344567");
+		ssdDriver->write(i, "0x12344567");
 	}
 	for (int i = 0; i < 10; i++) {
-		string data = ssdDriver.read(i);
+		string data = ssdDriver->read(i);
 		EXPECT_EQ("0x12344567", data);
 	}
 }
 
-TEST(SSDdrvierTest, TC3correctWriteInOffset)
+TEST_F(SddDriverTestFixture, TC3correctWriteInOffset)
 {
-	SSDDriver ssdDriver;
-
 	for (int i = 0;i < 10;i++) {
-		ssdDriver.write(i*5, "0x12222222");
+		ssdDriver->write(i*5, "0x12222222");
 	}
 	for (int i = 0; i < 10; i++) {
-		string data = ssdDriver.read(i*5);
+		string data = ssdDriver->read(i*5);
 		EXPECT_EQ("0x12222222", data);
 	}
 }
 
-TEST(SSDdrvierTest, TC4WriteInWrongPosition)
+TEST_F(SddDriverTestFixture, TC4WriteInWrongPosition)
 {
-	SSDDriver ssdDriver;
-	
-	ssdDriver.write(120, "0x1234AAAA");
+	ssdDriver->write(120, "0x1234AAAA");
 	
 	//TODO: check value by read function
 	EXPECT_EQ(1, 1);
