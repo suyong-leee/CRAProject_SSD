@@ -1,5 +1,5 @@
 #include "gmock/gmock.h"
-#include "sddDriver.cpp"
+#include "ssdDriver.cpp"
 #define __DEBUG__ (1)
 
 #if (__DEBUG__ == 1)
