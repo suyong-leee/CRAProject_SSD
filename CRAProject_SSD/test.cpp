@@ -35,8 +35,13 @@ public:
 
 		streampos writeOffset = (10 * addr);
 		
-		nand.open(nandFileName, ios::out);
-		if (nand.is_open() == false) {
+		nand.open(nandFileName, std::ios::in | std::ios::out);
+		if (!nand.is_open()) {
+			std::ofstream createFile(nandFileName);
+			createFile.close();
+			nand.open(nandFileName, std::ios::in | std::ios::out);
+		}
+		if (!nand.is_open()) {
 			makeError();
 			return;
 		}
@@ -44,8 +49,26 @@ public:
 	    nand << value;
 		nand.close();
 	}
-	virtual int read(int addr) {
-		return ssdMap[addr];
+	virtual string read(int addr) {
+		if (addr < 0 || addr >= 100) {
+			makeError();
+			return "";
+		}
+
+		streampos readOffset = 10 * addr;
+
+		nand.open(nandFileName, ios::in);
+		if (!nand.is_open()) {
+			makeError();
+			return "";
+		}
+
+		nand.seekg(readOffset);
+		char buffer[11] = { 0 };
+		nand.read(buffer, 10);
+		nand.close();
+
+		return std::string(buffer);
 	}
 private:
 	fstream nand;
@@ -77,9 +100,9 @@ TEST(SSDdrvierTest, TC1correctWrite)
 	SSDDriver ssdDriver;
 
 	ssdDriver.write(0, "0x11111111");
-	
-	//TODO: check value by read function
-	EXPECT_EQ(1, 1);
+	string data = ssdDriver.read(0);
+
+	EXPECT_EQ("0x11111111", data);
 }
 
 TEST(SSDdrvierTest, TC2correctWriteSeveralTimes)
@@ -89,9 +112,10 @@ TEST(SSDdrvierTest, TC2correctWriteSeveralTimes)
 	for (int i = 0;i < 10;i++) {
 		ssdDriver.write(i, "0x12344567");
 	}
-
-	//TODO: check value by read function
-	EXPECT_EQ(1, 1);
+	for (int i = 0; i < 10; i++) {
+		string data = ssdDriver.read(i);
+		EXPECT_EQ("0x12344567", data);
+	}
 }
 
 TEST(SSDdrvierTest, TC3correctWriteInOffset)
@@ -101,9 +125,10 @@ TEST(SSDdrvierTest, TC3correctWriteInOffset)
 	for (int i = 0;i < 10;i++) {
 		ssdDriver.write(i*5, "0x12222222");
 	}
-
-	//TODO: check value by read function
-	EXPECT_EQ(1, 1);
+	for (int i = 0; i < 10; i++) {
+		string data = ssdDriver.read(i*5);
+		EXPECT_EQ("0x12222222", data);
+	}
 }
 
 TEST(SSDdrvierTest, TC4WriteInWrongPosition)
@@ -119,7 +144,7 @@ TEST(SSDdrvierTest, TC4WriteInWrongPosition)
 class MockSSDDriver : public SSDDriver {
 public:
 	MOCK_METHOD(void, write, (int addr, string value), (override));
-	MOCK_METHOD(int, read, (int addr), (override));
+	MOCK_METHOD(string, read, (int addr), (override));
 };
 
 TEST(RunCommand, TC1WriteCommand)
