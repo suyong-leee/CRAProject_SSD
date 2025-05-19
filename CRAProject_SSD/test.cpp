@@ -12,13 +12,13 @@ int ssdMap[100];
 
 class SSDDriver {
 public:
-	virtual void run(std::vector<std::string> args)
+	virtual void run(vector<string> args)
 	{
-		std::string command = args[0];
+		string command = args[0];
 		if (command == "W")
 		{
 			int addr = stoi(args[1]);
-			std::string value = args[2];
+			string value = args[2];
 			write(addr, value);
 		}
 		else if (command == "R")
@@ -35,7 +35,7 @@ public:
 
 		streampos writeOffset = (10 * addr);
 		
-		nand.open(nandFileName, std::ios::out);
+		nand.open(nandFileName, ios::out);
 		if (nand.is_open() == false) {
 			makeError();
 			return;
@@ -61,20 +61,15 @@ private:
 	}
 };
 
-std::vector<std::string> parseArguments(int argc, char* argv[])
+vector<string> parseArguments(int argc, char* argv[])
 {
-	std::vector<std::string> args;
+	vector<string> args;
 	for (int i = 1; i < argc; ++i) 
 	{
 		args.emplace_back(argv[i]);
 	}
+
 	return args;
-
-}
-
-TEST(a, b)
-{
-	EXPECT_EQ(1, 1);
 }
 
 TEST(SSDdrvierTest, TC1correctWrite)
@@ -123,39 +118,35 @@ TEST(SSDdrvierTest, TC4WriteInWrongPosition)
 
 class MockSSDDriver : public SSDDriver {
 public:
-	MOCK_METHOD(void, write, (int addr, std::string value), (override));
+	MOCK_METHOD(void, write, (int addr, string value), (override));
 	MOCK_METHOD(int, read, (int addr), (override));
 };
 
-TEST(RunCommand, WriteCommand)
+TEST(RunCommand, TC1WriteCommand)
 {
 	MockSSDDriver mockSsdDriver;
-	std::vector<std::string> args = { "W", "20", "1423" };
+	vector<string> args = { "W", "20", "0x1289CDEF" };
 
-	EXPECT_CALL(mockSsdDriver, write(20, "1423"));
+	EXPECT_CALL(mockSsdDriver, write(20, "0x1289CDEF"));
 	mockSsdDriver.run(args);
 }
 
-TEST(RunCommand, ReadCommand)
+TEST(RunCommand, TC2ReadCommand)
 {
 	MockSSDDriver mockSsdDriver;
-	std::vector<std::string> args = { "R", "20"};
+	vector<string> args = { "R", "20"};
 
 	EXPECT_CALL(mockSsdDriver, read(20));
 	mockSsdDriver.run(args);
 }
 
-
-TEST(ArgumentParsing, EmptyArgument)
+TEST(ArgumentParsing, TC3EmptyArgument)
 {
 	int argc = 1;
 	char* argv[1];
+	argv[0] = const_cast<char*>("ssd.exe");
 
-	char exec[] = "ssd.exe";
-
-	argv[0] = exec;
-
-	std::vector<std::string> args = parseArguments(argc, argv);
+	vector<string> args = parseArguments(argc, argv);
 
 	ASSERT_EQ(args.size(), 0);
 }
@@ -164,18 +155,12 @@ TEST(ArgumentParsing, WriteArgument)
 {
 	int argc = 4;
 	char* argv[4];
+	argv[0] = const_cast<char*>("ssd.exe");
+	argv[1] = const_cast<char*>("W");
+	argv[2] = const_cast<char*>("20");
+	argv[3] = const_cast<char*>("0x1289CDEF");
 
-	char exec[] = "ssd.exe";
-	char type[] = "W";
-	char address[] = "20";
-	char value[] = "0x1289CDEF";
-
-	argv[0] = exec;
-	argv[1] = type;
-	argv[2] = address;
-	argv[3] = value;
-
-	std::vector<std::string> args = parseArguments(argc, argv);
+	vector<string> args = parseArguments(argc, argv);
 
 	ASSERT_EQ(args.size(), 3);
 	EXPECT_EQ(args[0], "W");
@@ -187,16 +172,11 @@ TEST(ArgumentParsing, ReadArgument)
 {
 	int argc = 3;
 	char* argv[3];
+	argv[0] = const_cast<char*>("ssd.exe");
+	argv[1] = const_cast<char*>("R");
+	argv[2] = const_cast<char*>("20");
 
-	char exec[] = "ssd.exe";
-	char type[] = "R";
-	char address[] = "20";
-
-	argv[0] = exec;
-	argv[1] = type;
-	argv[2] = address;
-
-	std::vector<std::string> args = parseArguments(argc, argv);
+	vector<string> args = parseArguments(argc, argv);
 
 	ASSERT_EQ(args.size(), 2);
 	EXPECT_EQ(args[0], "R");
