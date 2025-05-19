@@ -28,11 +28,11 @@ public:
 		}
 	}
 	virtual void write(int addr, string value) {
-		if (addr < 0 || addr >= 100) {
+		if (checkInvalidInputForWrite(addr, value) < 0) {
 			handleError();
 			return;
 		}
-
+		
 		streampos writeOffset = (10 * addr);
 
 		if (!openOrCreateNand(ios::in | ios::out)) {
@@ -69,6 +69,7 @@ public:
 private:
 	fstream nand;
 	const string nandFileName = "ssd_nand.txt";
+	const string validNunber = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
 	void handleError(void) {
 		overwriteTextToFile("output.txt", "ERROR");
@@ -103,6 +104,31 @@ private:
 		}
 
 		return args;
+	}
+
+	int checkInvalidInputForWrite(int addr, string value)
+	{
+		if (addr < 0 || addr >= 100) {
+			return -1;
+		}
+		if (value.find("0x", 0) == string::npos || value.size() != 10) {
+			return -1;
+		}
+
+		int arrayIdx;
+		int validNumIdx;
+		for (arrayIdx = 2; arrayIdx < 10; arrayIdx++) {
+			for (validNumIdx = 0; validNumIdx < 16;validNumIdx++) {
+				if (validNunber[validNumIdx] == value[arrayIdx]) {
+					break;
+				}
+			}
+			if (validNumIdx == 16) {
+				return -1;
+			}
+		}
+
+		return 0;
 	}
 
 	friend class SddDriverTestFixture;

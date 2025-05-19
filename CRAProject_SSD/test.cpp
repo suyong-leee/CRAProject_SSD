@@ -53,8 +53,42 @@ TEST_F(SddDriverTestFixture, TC4WriteInWrongPosition)
 {
 	ssdDriver->write(120, "0x1234AAAA");
 	
-	//TODO: check value by read function
-	EXPECT_EQ(1, 1);
+	string data = ssdDriver->read(120);
+	EXPECT_NE("0x1234AAAA", data);
+}
+
+TEST_F(SddDriverTestFixture, TC5WriteWithShortInputFormat)
+{
+	const char* argv[] = { "ssd.exe", "W", "3", "0xBBBB" };
+
+	ssdDriver->run(4, const_cast<char**>(argv));
+
+	string data = ssdDriver->read(3);
+	data = data.substr(0, 6);
+
+	EXPECT_NE("0xBBBB", data);
+}
+
+TEST_F(SddDriverTestFixture, TC5WriteWithNotStart0xFormat)
+{
+	const char* argv[] = { "ssd.exe", "W", "3", "0XBBBBAEDE" };
+
+	ssdDriver->run(4, const_cast<char**>(argv));
+
+	string data = ssdDriver->read(3);
+
+	EXPECT_NE("0XBBBBAEDE", data);
+}
+
+TEST_F(SddDriverTestFixture, TC5WriteWithNotNumber)
+{
+	const char* argv[] = { "ssd.exe", "W", "3", "0xZEBBAEDE" };
+
+	ssdDriver->run(4, const_cast<char**>(argv));
+
+	string data = ssdDriver->read(3);
+
+	EXPECT_NE("0xZEBBAEDE", data);
 }
 
 class MockSSDDriver : public SSDDriver {
