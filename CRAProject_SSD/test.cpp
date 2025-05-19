@@ -12,8 +12,9 @@ int ssdMap[100];
 
 class SSDDriver {
 public:
-	virtual void run(vector<string> args)
+	virtual void run(int argc, char* argv[])
 	{
+		vector<string> args = parseArguments(argc, argv);
 		string command = args[0];
 		if (command == "W")
 		{
@@ -70,6 +71,8 @@ public:
 
 		return std::string(buffer);
 	}
+
+
 private:
 	fstream nand;
 	const string nandFileName = "ssd_nand.txt";
@@ -82,18 +85,20 @@ private:
 		error << "ERROR";
 		error.close();
 	}
-};
 
-vector<string> parseArguments(int argc, char* argv[])
-{
-	vector<string> args;
-	for (int i = 1; i < argc; ++i) 
+	static vector<string> parseArguments(int argc, char* argv[])
 	{
-		args.emplace_back(argv[i]);
+		vector<string> args;
+		for (int i = 1; i < argc; ++i)
+		{
+			args.emplace_back(argv[i]);
+		}
+
+		return args;
 	}
 
-	return args;
-}
+	friend class SSDDriverTest;
+};
 
 TEST(SSDdrvierTest, TC1correctWrite)
 {
@@ -145,38 +150,48 @@ class MockSSDDriver : public SSDDriver {
 public:
 	MOCK_METHOD(void, write, (int addr, string value), (override));
 	MOCK_METHOD(string, read, (int addr), (override));
+			
+};
+class SSDDriverTest : public ::testing::Test
+{
+public:
+	std::vector<std::string> parseArguments(int argc, char* argv[]) {
+		return SSDDriver::parseArguments(argc, argv);
+	}
+
+	friend class SSDDriver;
 };
 
 TEST(RunCommand, TC1WriteCommand)
 {
 	MockSSDDriver mockSsdDriver;
-	vector<string> args = { "W", "20", "0x1289CDEF" };
+	const char* argv[] = {"ssd.exe", "W", "20", "0x1289CDEF" };
 
 	EXPECT_CALL(mockSsdDriver, write(20, "0x1289CDEF"));
-	mockSsdDriver.run(args);
+	mockSsdDriver.run(4, const_cast<char**>(argv));
 }
 
 TEST(RunCommand, TC2ReadCommand)
 {
 	MockSSDDriver mockSsdDriver;
-	vector<string> args = { "R", "20"};
+	const char* argv[] = {"ssd.exe", "R", "20" };
 
 	EXPECT_CALL(mockSsdDriver, read(20));
-	mockSsdDriver.run(args);
+	mockSsdDriver.run(3, const_cast<char**>(argv));
 }
 
-TEST(ArgumentParsing, TC3EmptyArgument)
+TEST_F(SSDDriverTest, EmptyArgument)
 {
 	int argc = 1;
 	char* argv[1];
 	argv[0] = const_cast<char*>("ssd.exe");
-
+	
 	vector<string> args = parseArguments(argc, argv);
 
 	ASSERT_EQ(args.size(), 0);
 }
 
-TEST(ArgumentParsing, WriteArgument)
+TEST_F(SSDDriverTest, WriteArgument)
 {
 	int argc = 4;
 	char* argv[4];
@@ -193,7 +208,7 @@ TEST(ArgumentParsing, WriteArgument)
 	EXPECT_EQ(args[2], "0x1289CDEF");
 }
 
-TEST(ArgumentParsing, ReadArgument)
+TEST_F(SSDDriverTest, ReadArgument)
 {
 	int argc = 3;
 	char* argv[3];
