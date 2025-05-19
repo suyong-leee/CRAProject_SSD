@@ -8,12 +8,24 @@ class SddDriverTestFixture : public Test {
 protected:
 	void SetUp() override {
 		ssdDriver = new SSDDriver;
+		srand(static_cast<unsigned int>(time(nullptr)));
 	}
 public:
 	SSDDriver * ssdDriver;
 
 	std::vector<std::string> parseArguments(int argc, char* argv[]) {
 		return SSDDriver::parseArguments(argc, argv);
+	}
+
+	string getHex() {
+		static const char hexDigits[] = "0123456789ABCDEF";
+		string result = "0x";
+
+		for (int i = 0; i < 8; ++i) {
+			result += hexDigits[rand() % 16];
+		}
+
+		return result;
 	}
 
 	friend class SSDDriver;
@@ -30,22 +42,22 @@ TEST_F(SddDriverTestFixture, TC1correctWrite)
 TEST_F(SddDriverTestFixture, TC2correctWriteSeveralTimes)
 {
 	for (int i = 0;i < 10;i++) {
-		ssdDriver->write(i, "0x12344567");
-	}
-	for (int i = 0; i < 10; i++) {
+		string hex = getHex();
+
+		ssdDriver->write(i, hex);
 		string data = ssdDriver->read(i);
-		EXPECT_EQ("0x12344567", data);
+		EXPECT_EQ(hex, data);
 	}
 }
 
 TEST_F(SddDriverTestFixture, TC3correctWriteInOffset)
 {
 	for (int i = 0;i < 10;i++) {
-		ssdDriver->write(i*5, "0x12222222");
-	}
-	for (int i = 0; i < 10; i++) {
-		string data = ssdDriver->read(i*5);
-		EXPECT_EQ("0x12222222", data);
+		string hex = getHex();
+
+		ssdDriver->write(i*5, hex);
+		string data = ssdDriver->read(i * 5);
+		EXPECT_EQ(hex, data);
 	}
 }
 

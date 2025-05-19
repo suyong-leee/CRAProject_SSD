@@ -28,36 +28,23 @@ public:
 		}
 	}
 	virtual void write(int addr, string value) {
-		if (checkInvalidInputForWrite(addr, value) < 0) {
-			handleError();
-			return;
-		}
-		
-		streampos writeOffset = (10 * addr);
+		if (checkInvalidInputForWrite(addr, value) < 0) return handleError();
+		if (!openOrCreateNand(ios::in | ios::out)) return handleError();
 
-		if (!openOrCreateNand(ios::in | ios::out)) {
-			handleError();
-			return;
-		}
+		streampos writeOffset = 10 * addr;
 
 		nand.seekp(writeOffset);
 		nand << value;
 		nand.close();
 	}
 	virtual string read(int addr) {
-		if (addr < 0 || addr >= 100) {
-			handleError();
-			return "";
-		}
+		if (addr < 0 || addr >= 100) return handleErrorReturn();
+		if (!openOrCreateNand(ios::in)) return handleErrorReturn();
 
 		streampos readOffset = 10 * addr;
 
-		if (!openOrCreateNand(ios::in)) {
-			handleError();
-			return "";
-		}
-
 		std::string result(10, '\0');
+		nand.seekp(readOffset);
 		nand.read(&result[0], 10);
 		nand.close();
 
@@ -70,6 +57,12 @@ private:
 	fstream nand;
 	const string nandFileName = "ssd_nand.txt";
 	const string validNunber = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+
+	string handleErrorReturn(void)
+	{
+		overwriteTextToFile("output.txt", "ERROR");
+		return "";
+	}
 
 	void handleError(void) {
 		overwriteTextToFile("output.txt", "ERROR");
