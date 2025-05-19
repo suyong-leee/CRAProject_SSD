@@ -362,3 +362,4 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /CRAProject_SSD/ssd_nand.txt
+/CRAProject_SSD/output.txt

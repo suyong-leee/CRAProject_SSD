@@ -8,6 +8,8 @@ class SSDDriver {
 public:
 	virtual void run(int argc, char* argv[])
 	{
+		if (argc <= 1) return;
+
 		vector<string> args = parseArguments(argc, argv);
 		string command = args[0];
 		if (command == "W")
@@ -62,6 +64,13 @@ public:
 		char buffer[11] = { 0 };
 		nand.read(buffer, 10);
 		nand.close();
+
+		ofstream output("output.txt");
+		if (output.is_open() == false) {
+			return "";
+		}
+		output << std::string(buffer);
+		output.close();
 
 		return std::string(buffer);
 	}
