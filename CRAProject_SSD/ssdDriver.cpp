@@ -8,84 +8,90 @@ class SSDDriver {
 public:
 	virtual void run(int argc, char* argv[])
 	{
-		if (argc <= 1) return;
+		if (argc <= 1)
+		{
+			handleError();
+			return;
+		}
 
 		vector<string> args = parseArguments(argc, argv);
 		string command = args[0];
+		int addr = stoi(args[1]);
+
 		if (command == "W")
 		{
-			int addr = stoi(args[1]);
-			string value = args[2];
-			write(addr, value);
+			write(addr, string(args[2]));
 		}
 		else if (command == "R")
 		{
-			int addr = stoi(args[1]);
 			read(addr);
 		}
 	}
 	virtual void write(int addr, string value) {
 		if (addr < 0 || addr >= 100) {
-			makeError();
+			handleError();
 			return;
 		}
 
 		streampos writeOffset = (10 * addr);
 
-		nand.open(nandFileName, std::ios::in | std::ios::out);
-		if (!nand.is_open()) {
-			std::ofstream createFile(nandFileName);
-			createFile.close();
-			nand.open(nandFileName, std::ios::in | std::ios::out);
-		}
-		if (!nand.is_open()) {
-			makeError();
+		if (!openOrCreateNand(ios::in | ios::out)) {
+			handleError();
 			return;
 		}
+
 		nand.seekp(writeOffset);
 		nand << value;
 		nand.close();
 	}
 	virtual string read(int addr) {
 		if (addr < 0 || addr >= 100) {
-			makeError();
+			handleError();
 			return "";
 		}
 
 		streampos readOffset = 10 * addr;
 
-		nand.open(nandFileName, ios::in);
-		if (!nand.is_open()) {
-			makeError();
+		if (!openOrCreateNand(ios::in)) {
+			handleError();
 			return "";
 		}
 
-		nand.seekg(readOffset);
-		char buffer[11] = { 0 };
-		nand.read(buffer, 10);
+		std::string result(10, '\0');
+		nand.read(&result[0], 10);
 		nand.close();
 
-		ofstream output("output.txt");
-		if (output.is_open() == false) {
-			return "";
-		}
-		output << std::string(buffer);
-		output.close();
+		overwriteTextToFile("output.txt", result);
 
-		return std::string(buffer);
+		return result;
 	}
 
 private:
 	fstream nand;
 	const string nandFileName = "ssd_nand.txt";
 
-	void makeError(void) {
-		ofstream error("output.txt");
-		if (error.is_open() == false) {
+	void handleError(void) {
+		overwriteTextToFile("output.txt", "ERROR");
+	}
+
+	void overwriteTextToFile(string fileName, string text)
+	{
+		ofstream file(fileName);
+		if (file.is_open() == false) {
 			return;
 		}
-		error << "ERROR";
-		error.close();
+		file << text;
+		file.close();
+	}
+
+	bool openOrCreateNand(ios_base::openmode mode) {
+		nand.open(nandFileName, mode);
+		if (!nand.is_open()) {
+			ofstream createFile(nandFileName);
+			createFile.close();
+			nand.open(nandFileName, mode);
+		}
+		return nand.is_open();
 	}
 
 	static vector<string> parseArguments(int argc, char* argv[])
@@ -99,5 +105,5 @@ private:
 		return args;
 	}
 
-	friend class SSDDriverTest;
+	friend class SddDriverTestFixture;
 };

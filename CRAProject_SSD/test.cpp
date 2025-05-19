@@ -11,6 +11,12 @@ protected:
 	}
 public:
 	SSDDriver * ssdDriver;
+
+	std::vector<std::string> parseArguments(int argc, char* argv[]) {
+		return SSDDriver::parseArguments(argc, argv);
+	}
+
+	friend class SSDDriver;
 };
 
 TEST_F(SddDriverTestFixture, TC1correctWrite)
@@ -55,16 +61,6 @@ class MockSSDDriver : public SSDDriver {
 public:
 	MOCK_METHOD(void, write, (int addr, string value), (override));
 	MOCK_METHOD(string, read, (int addr), (override));
-			
-};
-class SSDDriverTest : public ::testing::Test
-{
-public:
-	std::vector<std::string> parseArguments(int argc, char* argv[]) {
-		return SSDDriver::parseArguments(argc, argv);
-	}
-
-	friend class SSDDriver;
 };
 
 TEST(RunCommand, TC1WriteCommand)
@@ -85,7 +81,7 @@ TEST(RunCommand, TC2ReadCommand)
 	mockSsdDriver.run(3, const_cast<char**>(argv));
 }
 
-TEST_F(SSDDriverTest, EmptyArgument)
+TEST_F(SddDriverTestFixture, EmptyArgument)
 {
 	int argc = 1;
 	char* argv[1];
@@ -96,7 +92,7 @@ TEST_F(SSDDriverTest, EmptyArgument)
 	ASSERT_EQ(args.size(), 0);
 }
 
-TEST_F(SSDDriverTest, WriteArgument)
+TEST_F(SddDriverTestFixture, WriteArgument)
 {
 	int argc = 4;
 	char* argv[4];
@@ -113,7 +109,7 @@ TEST_F(SSDDriverTest, WriteArgument)
 	EXPECT_EQ(args[2], "0x1289CDEF");
 }
 
-TEST_F(SSDDriverTest, ReadArgument)
+TEST_F(SddDriverTestFixture, ReadArgument)
 {
 	int argc = 3;
 	char* argv[3];
