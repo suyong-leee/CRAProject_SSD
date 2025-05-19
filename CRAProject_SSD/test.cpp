@@ -35,7 +35,11 @@ public:
 
 		streampos writeOffset = (10 * addr);
 		
-		nand.open(nandFileName, std::ios::in | std::ios::out);
+		nand.open(nandFileName, std::ios::out);
+		if (nand.is_open() == false) {
+			makeError();
+			return;
+		}
 		nand.seekp(writeOffset);
 	    nand << value;
 		nand.close();
@@ -49,8 +53,8 @@ private:
 
 	void makeError(void) {
 		ofstream error("output.txt");
-		if (error.is_open()) {
-			cout << "dbg " << endl;
+		if (error.is_open() == false) {
+			return;
 		}
 		error << "ERROR";
 		error.close();
@@ -77,7 +81,7 @@ TEST(SSDdrvierTest, TC1correctWrite)
 {
 	SSDDriver ssdDriver;
 
-	ssdDriver.write(0, "0x12345678");
+	ssdDriver.write(0, "0x11111111");
 	
 	//TODO: check value by read function
 	EXPECT_EQ(1, 1);
@@ -100,7 +104,7 @@ TEST(SSDdrvierTest, TC3correctWriteInOffset)
 	SSDDriver ssdDriver;
 
 	for (int i = 0;i < 10;i++) {
-		ssdDriver.write(i*5, "0x1234AAAA");
+		ssdDriver.write(i*5, "0x12222222");
 	}
 
 	//TODO: check value by read function
