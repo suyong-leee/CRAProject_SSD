@@ -25,33 +25,10 @@ public:
 		}
 	}
 	virtual void write(int addr, string value) {
-		if (addr < 0 || addr >= 100) {
-			makeError();
+		if (checkInvalidInputForWrite(addr, value) < 0) {
 			return;
 		}
-		if (value.find("0x", 0) == string::npos) {
-			makeError();
-			return;
-		}
-		if (value.size() != 10) {
-			makeError();
-			return;
-		}
-
-		int arrayIdx;
-		int validNumIdx;
-		for (arrayIdx = 2; arrayIdx < 10; arrayIdx++) {
-			for (validNumIdx = 0; validNumIdx < 16;validNumIdx++) {
-				if (validNunber[validNumIdx] == value[arrayIdx]) {
-					break;
-				}
-			}
-			if (validNumIdx == 16) {
-				makeError();
-				return;
-			}
-		}
-
+		
 		streampos writeOffset = (10 * addr);
 
 		nand.open(nandFileName, std::ios::in | std::ios::out);
@@ -120,6 +97,34 @@ private:
 		}
 
 		return args;
+	}
+
+	int checkInvalidInputForWrite(int addr, string value)
+	{
+		if (addr < 0 || addr >= 100) {
+			makeError();
+			return -1;
+		}
+		if (value.find("0x", 0) == string::npos || value.size() != 10) {
+			makeError();
+			return -1;
+		}
+
+		int arrayIdx;
+		int validNumIdx;
+		for (arrayIdx = 2; arrayIdx < 10; arrayIdx++) {
+			for (validNumIdx = 0; validNumIdx < 16;validNumIdx++) {
+				if (validNunber[validNumIdx] == value[arrayIdx]) {
+					break;
+				}
+			}
+			if (validNumIdx == 16) {
+				makeError();
+				return -1;
+			}
+		}
+
+		return 0;
 	}
 
 	friend class SSDDriverTest;
