@@ -4,78 +4,20 @@
 
 using namespace std;
 
-class SSDDriver {
+class Command {
 public:
-	virtual void run(int argc, char* argv[])
-	{
-		if (argc <= 1)
-		{
-			handleError();
-			return;
-		}
+	virtual ~Command() = default;
+	virtual void execute() = 0;
+};
 
-		vector<string> args = parseArguments(argc, argv);
-		string command = args[0];
-		int addr = stoi(args[1]);
-
-		if (command == "W")
-		{
-			write(addr, string(args[2]));
-		}
-		else if (command == "R")
-		{
-			read(addr);
-		}
-	}
-	virtual void write(int addr, string value) {
-		if (checkInvalidInputForWrite(addr, value) < 0) return handleError();
-		if (!openOrCreateNand(ios::in | ios::out)) return handleError();
-
-		streampos writeOffset = 10 * addr;
-
-		nand.seekp(writeOffset);
-		nand << value;
-		nand.close();
-	}
-	virtual string read(int addr) {
-		if (addr < 0 || addr >= 100) return handleErrorReturn();
-		if (!openOrCreateNand(ios::in)) return handleErrorReturn();
-
-		streampos readOffset = 10 * addr;
-
-		string readResult(10, '\0');
-		nand.seekp(readOffset);
-		nand.read(&readResult[0], 10);
-		std::streamsize bytesRead = nand.gcount();
-		nand.close();
-
-		string output = bytesRead == 0 ? "0x00000000" : readResult;
-		overwriteTextToFile("output.txt", output);
-
-		return output;
-	}
-
-private:
+struct SSDContext {
 	fstream nand;
 	const string nandFileName = "ssd_nand.txt";
-	const string validNunber = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
-	string handleErrorReturn(void)
-	{
-		overwriteTextToFile("output.txt", "ERROR");
-		return "";
-	}
-
-	void handleError(void) {
-		overwriteTextToFile("output.txt", "ERROR");
-	}
-
-	static void overwriteTextToFile(string fileName, string text)
-	{
+	static void overwriteTextToFile(const string& fileName, const string& text) {
 		ofstream file(fileName);
-		if (file.is_open() == false) {
-			return;
-		}
+		if (!file.is_open()) return;
+		
 		file << text;
 		file.close();
 	}
@@ -90,40 +32,114 @@ private:
 		return nand.is_open();
 	}
 
-	static vector<string> parseArguments(int argc, char* argv[])
-	{
-		vector<string> args;
-		for (int i = 1; i < argc; ++i)
-		{
-			args.emplace_back(argv[i]);
-		}
-
-		return args;
+	string handleErrorReturn() {
+		overwriteTextToFile("output.txt", "ERROR");
+		return "";
 	}
 
-	int checkInvalidInputForWrite(int addr, string value)
-	{
-		if (addr < 0 || addr >= 100) {
-			return -1;
-		}
-		if (value.find("0x", 0) == string::npos || value.size() != 10) {
-			return -1;
-		}
+	void handleError() {
+		overwriteTextToFile("output.txt", "ERROR");
+	}
+};
 
-		int arrayIdx;
-		int validNumIdx;
-		for (arrayIdx = 2; arrayIdx < 10; arrayIdx++) {
-			for (validNumIdx = 0; validNumIdx < 16;validNumIdx++) {
-				if (validNunber[validNumIdx] == value[arrayIdx]) {
-					break;
-				}
-			}
-			if (validNumIdx == 16) {
-				return -1;
-			}
-		}
+class WriteCommand : public Command {
+public:
+	WriteCommand(SSDContext& context, int addr, const string& value)
+		: ctx(context), addr(addr), value(value) {
+	}
 
+	void execute() override {
+		if (checkInvalidInputForWrite() < 0) return ctx.handleError();
+		if (!ctx.openOrCreateNand(ios::in | ios::out)) return ctx.handleError();
+
+		streampos offset = 10 * addr;
+		ctx.nand.seekp(offset);
+		ctx.nand << value;
+		ctx.nand.close();
+	}
+
+private:
+	SSDContext& ctx;
+	int addr;
+	string value;
+
+	int checkInvalidInputForWrite() {
+		const string valid = "0123456789ABCDEF";
+		if (addr < 0 || addr >= 100) return -1;
+		if (value.find("0x") != 0 || value.size() != 10) return -1;
+
+		for (int i = 2; i < 10; ++i) {
+			if (valid.find(value[i]) == string::npos) return -1;
+		}
 		return 0;
+	}
+};
+
+class ReadCommand : public Command{
+public:
+	ReadCommand(SSDContext & context, int addr)
+		: ctx(context), addr(addr) {
+}
+
+void execute() override {
+	if (addr < 0 || addr >= 100) return (void)ctx.handleErrorReturn();
+	if (!ctx.openOrCreateNand(ios::in)) return (void)ctx.handleErrorReturn();
+
+	string readResult(10, '\0');
+	streampos offset = 10 * addr;
+
+	ctx.nand.seekp(offset);
+	ctx.nand.read(&readResult[0], 10);
+	streamsize bytesRead = ctx.nand.gcount();
+	ctx.nand.close();
+
+	string output = (bytesRead == 0) ? "0x00000000" : readResult;
+	ctx.overwriteTextToFile("output.txt", output);
+}
+
+private:
+	SSDContext & ctx;
+	int addr;
+};
+
+class SSDDriver {
+public:
+	void run(int argc, char* argv[]) {
+		if (argc <= 1) return ctx.handleError();
+
+		vector<string> args = parseArguments(argc, argv);
+		string command = args[0];
+		int addr = stoi(args[1]);
+
+		unique_ptr<Command> cmd;
+
+		try {
+			if (command == "W") {
+				cmd = make_unique<WriteCommand>(ctx, addr, args[2]);
+			}
+			else if (command == "R") {
+				cmd = make_unique<ReadCommand>(ctx, addr);
+			}
+			else {
+				return ctx.handleError();
+			}
+		}
+		catch (...) {
+			return ctx.handleError();
+		}
+
+		cmd->execute();
+	}
+
+private:
+	SSDContext ctx;
+
+	static vector<string> parseArguments(int argc, char* argv[]) {
+		vector<string> args;
+		for (int i = 1; i < argc; ++i) {
+			args.emplace_back(argv[i]);
+		}
+		return args;
 	}
 
 	friend class SddDriverTestFixture;
