@@ -221,7 +221,7 @@ TEST_F(SddDriverTestFixture, EraseSuccess)
 	ReadCommand readCmd(ctx, 0);
 	readCmd.execute();
 
-	string data = readFileAsString("output.txt");
+	string data = readFileAsString("ssd_output.txt");
 	EXPECT_EQ("0x00000000", data);
 }
 
@@ -237,7 +237,7 @@ TEST_F(SddDriverTestFixture, EraseFailOutOfRange)
 	ReadCommand readCmd(ctx, 0);
 	readCmd.execute();
 
-	string data = readFileAsString("output.txt");
+	string data = readFileAsString("ssd_output.txt");
 	EXPECT_EQ("0x11111111", data);
 }
 
@@ -257,7 +257,7 @@ TEST_F(SddDriverTestFixture, EraseSuccessInManyPages)
 		ReadCommand readCmd(ctx, 0);
 		readCmd.execute();
 
-		string data = readFileAsString("output.txt");
+		string data = readFileAsString("ssd_output.txt");
 		EXPECT_EQ("0x00000000", data);
 	}
 }

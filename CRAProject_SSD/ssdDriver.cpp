@@ -87,8 +87,8 @@ public:
 }
 
     void execute() override {
-	    if (addr < 0 || addr >= LBA_MAX) return (void)ctx.handleErrorReturn();
-	    if (!ctx.openOrCreateNand(ios::in)) return (void)ctx.handleErrorReturn();
+	    if (addr < 0 || addr >= LBA_MAX) return ctx.handleError();
+	    if (!ctx.openOrCreateNand(ios::in)) return ctx.handleError();
 
         string readResult(10, '\0');
 	    streampos offset = 10 * addr;
@@ -100,7 +100,7 @@ public:
 
 
 	    string output = (bytesRead == 0) ? "0x00000000" : readResult;
-	    ctx.overwriteTextToFile("output.txt", output);
+	    ctx.overwriteTextToFile("ssd_output.txt", output);
     }
 
 private:
