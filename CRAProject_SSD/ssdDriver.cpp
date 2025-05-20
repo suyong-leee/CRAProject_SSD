@@ -98,7 +98,6 @@ public:
         streamsize bytesRead = ctx.nand.gcount();
         ctx.nand.close();
 
-
         string output = (bytesRead == 0) ? "0x00000000" : readResult;
         ctx.overwriteTextToFile("ssd_output.txt", output);
     }
@@ -166,7 +165,7 @@ public:
 
         unique_ptr<Command> cmd;
         
-        //erase °¡µåÀı »ı¼º
+        //erase ê°€ë“œì ˆ ìƒì„±
         if (command == "E" && args[2] == "0")
         {
             return;
@@ -290,13 +289,13 @@ public:
                             buffer.push_back({ command,to_string(newStart),to_string(newEnd - newStart + 1) });
                         }
                     }
-                    else { //ºÒ°¡´ÉÇÑ ÄÉÀÌ½ºÀÌ±äÇÔ...
+                    else { //ë¶ˆê°€ëŠ¥í•œ ì¼€ì´ìŠ¤ì´ê¸´í•¨...
                         return ctx.handleError();
                     }
                 }
                 //end commonbuffer control
             }
-            //ÃßÈÄ¿¡ ¾Æ·¡ if¹® °ú ÅëÇÕ
+            //ì¶”í›„ì— ì•„ë˜ ifë¬¸ ê³¼ í†µí•©
 
             if (command == "W") {
                 //cmd = make_unique<NoopCommand>();
