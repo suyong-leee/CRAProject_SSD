@@ -157,7 +157,8 @@ public:
 		
 		try {
 			if (command == "W") {
-				cmd = make_unique<NoopCommand>();
+				//cmd = make_unique<NoopCommand>();
+				cmd = make_unique<WriteCommand>(ctx, addr, args[2]);
 				addCommandBuffer(buffer, args);
 
 				writeCommandBuffer(buffer);
@@ -166,7 +167,8 @@ public:
 				cmd = make_unique<ReadCommand>(ctx, addr);
 			}
 			else if (command == "E") {
-				cmd = make_unique<NoopCommand>();
+				//cmd = make_unique<NoopCommand>();
+				cmd = make_unique<EraseCommand>(ctx, addr, args[2]);
 				addCommandBuffer(buffer, args);
 
 				writeCommandBuffer(buffer);
