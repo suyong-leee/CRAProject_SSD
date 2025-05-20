@@ -227,18 +227,17 @@ TEST_F(SddDriverTestFixture, EraseSuccess)
 
 TEST_F(SddDriverTestFixture, EraseFailOutOfRange)
 {
-	const char* args[3] = { "E", "0", "120" };
-
-	WriteCommand writeCmd(ctx, 0, "0x11111111");
+	WriteCommand writeCmd(ctx, 0, "0x11112222");
 	writeCmd.execute();
 
-	ssdDriver->run(3, const_cast<char**>(args));
+	EraseCommand eraseCmd(ctx, 0, "120");
+	eraseCmd.execute();
 
 	ReadCommand readCmd(ctx, 0);
 	readCmd.execute();
 
 	string data = readFileAsString("ssd_output.txt");
-	EXPECT_EQ("0x11111111", data);
+	EXPECT_EQ("0x11112222", data);
 }
 
 TEST_F(SddDriverTestFixture, EraseSuccessInManyPages)
