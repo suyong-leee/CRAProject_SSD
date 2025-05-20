@@ -135,13 +135,29 @@ private:
 
 class FlushCommand : public Command {
 public:
-    FlushCommand() {
+    FlushCommand(SSDContext& context, vector<vector<string>> &buffer)
+        : ctx(context), cmdbuffer(buffer) {
     }
     void execute() override {
+        for (int i = 0;i < cmdbuffer.size(); i++) {
+            if (cmdbuffer[i][0] == "W") {
+                int addr = stoi(cmdbuffer[i][1]);
+                unique_ptr<Command> cmd = make_unique<WriteCommand>(ctx, addr, cmdbuffer[i][2]);
+                cmd->execute();
+            }
+            else if (cmdbuffer[i][0] == "R") {
+                int addr = stoi(cmdbuffer[i][1]);
+                unique_ptr<Command> cmd = make_unique<ReadCommand>(ctx, addr);
+                cmd->execute();
+            }
+        }
+        cmdbuffer.clear();
         return;
     }
 
 private:
+    vector<vector<string>> cmdbuffer;
+    SSDContext& ctx;
 };
 
 class NoopCommand : public Command
