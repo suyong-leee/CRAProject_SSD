@@ -102,23 +102,54 @@ private:
 	int addr;
 };
 
+class EraseCommand : public Command {
+public:
+	EraseCommand(SSDContext& context, int addr, string size)
+		: ctx(context), addr(addr) {
+		eraseSize = atoi(size.c_str());
+	}
+	void execute() override {
+		if ((addr < 0 || addr >= 100) ||
+			(!ctx.openOrCreateNand(ios::in | ios::out)) ||
+			(addr + eraseSize > 100)) {
+			ctx.handleError();
+		}
+
+		for (int offsetIdx = 0; offsetIdx < eraseSize; offsetIdx++) {
+			streampos offsetBase = 10 * (addr + offsetIdx);
+			ctx.nand.seekp(offsetBase);
+			ctx.nand << "0x00000000";
+		}
+		ctx.nand.close();
+	}
+private:
+	SSDContext& ctx;
+	int addr;
+	int eraseOffset;
+	int eraseSize;
+};
+
 class SSDDriver {
 public:
 	void run(int argc, char* argv[]) {
-		if (argc <= 1) return ctx.handleError();
 
+		if (argc <= 1) return ctx.handleError();
+		
 		vector<string> args = parseArguments(argc, argv);
 		string command = args[0];
 		int addr = stoi(args[1]);
 
 		unique_ptr<Command> cmd;
-
+		
 		try {
 			if (command == "W") {
 				cmd = make_unique<WriteCommand>(ctx, addr, args[2]);
 			}
 			else if (command == "R") {
 				cmd = make_unique<ReadCommand>(ctx, addr);
+			}
+			else if (command == "E") {
+				cmd = make_unique<EraseCommand>(ctx, addr, args[2]);
 			}
 			else {
 				return ctx.handleError();

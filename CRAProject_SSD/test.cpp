@@ -208,3 +208,35 @@ TEST_F(SddDriverTestFixture, ReadArgument)
 	EXPECT_EQ(args[1], "20");
 }
 
+TEST_F(SddDriverTestFixture, EraseSuccess)
+{
+	const char *args[3] = {"E", "0", "1"};
+
+	WriteCommand writeCmd(ctx, 0, "0x11111111");
+	writeCmd.execute();
+	
+	EraseCommand eraseCmd(ctx, 0, "1");
+	eraseCmd.execute();
+	
+	ReadCommand readCmd(ctx, 0);
+	readCmd.execute();
+
+	string data = readFileAsString("output.txt");
+	EXPECT_EQ("0x00000000", data);
+}
+
+TEST_F(SddDriverTestFixture, EraseFailOutOfRange)
+{
+	const char* args[3] = { "E", "0", "120" };
+
+	WriteCommand writeCmd(ctx, 0, "0x11111111");
+	writeCmd.execute();
+
+	ssdDriver->run(3, const_cast<char**>(args));
+
+	ReadCommand readCmd(ctx, 0);
+	readCmd.execute();
+
+	string data = readFileAsString("output.txt");
+	EXPECT_EQ("0x11111111", data);
+}
