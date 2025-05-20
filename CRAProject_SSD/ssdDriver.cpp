@@ -8,6 +8,8 @@ class Command {
 public:
 	virtual ~Command() = default;
 	virtual void execute() = 0;
+
+	const int LBA_MAX = 100;
 };
 
 struct SSDContext {
@@ -65,7 +67,7 @@ private:
 
 	int checkInvalidInputForWrite() {
 		const string valid = "0123456789ABCDEF";
-		if (addr < 0 || addr >= 100) return -1;
+		if (addr < 0 || addr >= LBA_MAX) return -1;
 		if (value.find("0x") != 0 || value.size() != 10) return -1;
 
 		for (int i = 2; i < 10; ++i) {
@@ -81,44 +83,75 @@ public:
 		: ctx(context), addr(addr) {
 }
 
-void execute() override {
-	if (addr < 0 || addr >= 100) return (void)ctx.handleErrorReturn();
-	if (!ctx.openOrCreateNand(ios::in)) return (void)ctx.handleErrorReturn();
+    void execute() override {
+	    if (addr < 0 || addr >= LBA_MAX) return (void)ctx.handleErrorReturn();
+	    if (!ctx.openOrCreateNand(ios::in)) return (void)ctx.handleErrorReturn();
 
-	string readResult(10, '\0');
-	streampos offset = 10 * addr;
+        string readResult(10, '\0');
+	    streampos offset = 10 * addr;
 
-	ctx.nand.seekp(offset);
-	ctx.nand.read(&readResult[0], 10);
-	streamsize bytesRead = ctx.nand.gcount();
-	ctx.nand.close();
+	    ctx.nand.seekp(offset);
+	    ctx.nand.read(&readResult[0], 10);
+	    streamsize bytesRead = ctx.nand.gcount();
+	    ctx.nand.close();
 
-	string output = (bytesRead == 0) ? "0x00000000" : readResult;
-	ctx.overwriteTextToFile("ssd_output.txt", output);
-}
+
+	    string output = (bytesRead == 0) ? "0x00000000" : readResult;
+	    ctx.overwriteTextToFile("output.txt", output);
+    }
 
 private:
 	SSDContext & ctx;
 	int addr;
 };
 
+class EraseCommand : public Command {
+public:
+	EraseCommand(SSDContext& context, int addr, string size)
+		: ctx(context), addr(addr) {
+		eraseSize = atoi(size.c_str());
+	}
+	void execute() override {
+		if ((addr < 0 || addr >= LBA_MAX) ||
+			(!ctx.openOrCreateNand(ios::in | ios::out)) ||
+			(addr + eraseSize > LBA_MAX)) {
+			ctx.handleError();
+		}
+
+		for (int offsetIdx = 0; offsetIdx < eraseSize; offsetIdx++) {
+			streampos offsetBase = 10 * (addr + offsetIdx);
+			ctx.nand.seekp(offsetBase);
+			ctx.nand << "0x00000000";
+		}
+		ctx.nand.close();
+	}
+private:
+	SSDContext& ctx;
+	int addr;
+	int eraseSize;
+};
+
 class SSDDriver {
 public:
 	void run(int argc, char* argv[]) {
-		if (argc <= 1) return ctx.handleError();
 
+		if (argc <= 1) return ctx.handleError();
+		
 		vector<string> args = parseArguments(argc, argv);
 		string command = args[0];
 		int addr = stoi(args[1]);
 
 		unique_ptr<Command> cmd;
-
+		
 		try {
 			if (command == "W") {
 				cmd = make_unique<WriteCommand>(ctx, addr, args[2]);
 			}
 			else if (command == "R") {
 				cmd = make_unique<ReadCommand>(ctx, addr);
+			}
+			else if (command == "E") {
+				cmd = make_unique<EraseCommand>(ctx, addr, args[2]);
 			}
 			else {
 				return ctx.handleError();
