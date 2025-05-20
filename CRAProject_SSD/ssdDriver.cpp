@@ -1,4 +1,4 @@
-#include <vector>
+﻿#include <vector>
 #include <string>
 #include <fstream>
 
@@ -102,6 +102,18 @@ private:
 	int addr;
 };
 
+class FlushCommand : public Command {
+public:
+	FlushCommand(SSDContext& context, int addr, const string& value) {
+	}
+	void execute() override {
+		return;
+	}
+
+private:
+};
+
+
 class SSDDriver {
 public:
 	void run(int argc, char* argv[]) {
@@ -110,12 +122,143 @@ public:
 		vector<string> args = parseArguments(argc, argv);
 		string command = args[0];
 		int addr = stoi(args[1]);
-
+		vector<vector<string>> buffer = { {"W","1","0xABABABAB"},{"E","1","3"} };
 		unique_ptr<Command> cmd;
 
+		//erase 가드절 생성
+		if (command == "E" && args[2] == "0")
+		{
+			return;
+		}
+
 		try {
-			if (command == "W") {
-				cmd = make_unique<WriteCommand>(ctx, addr, args[2]);
+			if (command == "W" || command == "E") {
+				//commonbuffer control
+				int bufferCount = buffer.size();
+				if (bufferCount == 5) {
+					//flush
+					cmd = make_unique<FlushCommand>(ctx, addr, args[2]);
+					//regist
+					buffer[0][0] = command;
+					buffer[0][1] = args[1];
+					buffer[0][2] = args[2];
+				}
+				else if (bufferCount == 0) {
+					//regist
+					buffer[0][0] = command;
+					buffer[0][1] = args[1];
+					buffer[0][2] = args[2];
+				}
+				else
+				{
+					if (command == "W") {
+						for (int i = bufferCount - 1; i >= 0; i--) {
+							if (buffer[i][0] == "W" && buffer[i][1] == args[1]) {
+								buffer.erase(buffer.begin() + i);
+							}
+						}
+						buffer.push_back({command,args[1],args[2]});
+					}
+					else if (command == "E") {
+						for (int i = bufferCount - 1; i >= 0; i--) {
+							if (buffer[i][0] == "W") {
+								if ((stoi(buffer[i][1]) >= stoi(args[1])) && (stoi(buffer[i][1]) < (stoi(args[1]) + stoi(args[2])))) {
+									buffer.erase(buffer.begin() + i);
+								}
+							}
+						}
+						int newStart = stoi(args[1]);
+						int newEnd = stoi(args[1]) + stoi(args[2]) - 1;
+						for (int i = bufferCount - 1; i >= 0; i--) {
+							if (buffer[i][0] == "E") {
+								int targetStart = stoi(buffer[i][1]);
+								int targetEnd = stoi(buffer[i][1]) + stoi(buffer[i][2]) -1;
+
+								if (targetEnd- targetStart + 1 == 10) {
+									continue;
+								}
+								if ((targetStart <= newStart) && (targetEnd <= newEnd)) {
+									targetEnd = newEnd;
+									if (targetEnd - targetStart + 1 > 10)
+									{
+										newStart = targetStart + 10;
+										newEnd = targetEnd;
+										buffer[i][1] = to_string(targetStart);
+										buffer[i][2] = to_string(10);
+									}
+									else
+									{
+										buffer[i][1] = to_string(targetStart);
+										buffer[i][2] = to_string(targetEnd - targetStart + 1);
+										newStart = -1;
+										break;
+									}
+								}
+								else if ((targetStart >= newStart) && (targetEnd <= newEnd)) {
+									targetStart = newStart;
+									targetEnd = newEnd;
+									if (targetEnd - targetStart + 1 > 10)
+									{
+										newStart = targetStart + 10;
+										newEnd = targetEnd;
+										buffer[i][1] = to_string(targetStart);
+										buffer[i][2] = to_string(10);
+									}
+									else
+									{
+										buffer[i][1] = to_string(targetStart);
+										buffer[i][2] = to_string(targetEnd - targetStart + 1);
+										newStart = -1;
+										break;
+									}
+								}
+								else if ((targetStart <= newStart) && (targetEnd >= newEnd)) {
+									targetEnd = newEnd;
+									if (targetEnd - targetStart + 1 > 10)
+									{
+										newStart = targetStart + 10;
+										newEnd = targetEnd;
+										buffer[i][1] = to_string(targetStart);
+										buffer[i][2] = to_string(10);
+									}
+									else
+									{
+										buffer[i][1] = to_string(targetStart);
+										buffer[i][2] = to_string(targetEnd - targetStart + 1);
+										newStart = -1;
+										break;
+									}
+								}
+								else if ((targetStart >= newStart) && (targetEnd >= newEnd)) {
+									targetStart = newStart;
+									if (targetEnd - targetStart + 1 > 10)
+									{
+										newStart = targetStart + 10;
+										newEnd = targetEnd;
+										buffer[i][1] = to_string(targetStart);
+										buffer[i][2] = to_string(10);
+									}
+									else
+									{
+										buffer[i][1] = to_string(targetStart);
+										buffer[i][2] = to_string(targetEnd - targetStart + 1);
+										newStart = -1;
+										break;
+									}
+								}
+								
+							}
+						}
+						if (newStart != -1) {
+							buffer.push_back({ command,to_string(newStart),to_string(newEnd - newStart + 1) });
+						}
+					}
+					else { //불가능한 케이스이긴함...
+						return ctx.handleError();
+					}
+				}
+				//end commonbuffer control
+				//cmd = make_unique<WriteCommand>(ctx, addr, args[2]);
 			}
 			else if (command == "R") {
 				cmd = make_unique<ReadCommand>(ctx, addr);
