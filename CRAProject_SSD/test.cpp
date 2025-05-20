@@ -297,3 +297,20 @@ TEST_F(SddDriverTestFixture, TC1CommandBufferTest)
 		EXPECT_EQ(correctFileNames[correctFileNamesIdx++], fileName);
 	}
 }
+
+TEST_F(SddDriverTestFixture, ForceToFlush)
+{
+	const char* argv0[] = { "ssd.exe", "W", "0", "0x12345678" };
+	const char* argv1[] = { "ssd.exe", "W", "1", "0x12345678" };
+	const char* argv2[] = { "ssd.exe", "W", "2", "0x12345678" };
+	const char* argv3[] = { "ssd.exe", "W", "3", "0x12345678" };
+	const char* argv4[] = { "ssd.exe", "W", "4", "0x12345678" };
+	const char* argv5[] = { "ssd.exe", "W", "5", "0x12345678" };
+
+	ssdDriver->run(4, const_cast<char**>(argv0));
+	ssdDriver->run(4, const_cast<char**>(argv1));
+	ssdDriver->run(4, const_cast<char**>(argv2));
+	ssdDriver->run(4, const_cast<char**>(argv3));
+	ssdDriver->run(4, const_cast<char**>(argv4));
+	ssdDriver->run(4, const_cast<char**>(argv5));
+}
