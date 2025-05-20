@@ -302,7 +302,9 @@ public:
                 cmd = make_unique<WriteCommand>(ctx, addr, args[2]);
             }
             else if (command == "R") {
-                cmd = make_unique<ReadCommand>(ctx, addr);
+                if (fastRead(args, buffer) == false) {
+                    cmd = make_unique<ReadCommand>(ctx, addr);
+                }
             }
             else if (command == "E") {
                 //cmd = make_unique<NoopCommand>();
@@ -447,6 +449,26 @@ private:
             
             ofs.close();
         }
+    }
+
+    bool fastRead(vector<string> args, vector<vector<string>> buffer)
+    {
+        int addr = stoi(args[1]);
+        for (int i = (int)buffer.size() - 1; i >= 0; i--) {
+            string command = buffer[i][0];
+            if (command != "W" && command != "E") continue;
+
+            int commandAddr = stoi(buffer[i][1]);
+            int commandAddrSize = command == "E" ? stoi(buffer[i][2]) : 1;
+            if (addr < commandAddr || addr >= commandAddr + commandAddrSize) continue;
+
+            string value = command == "E" ? "0x00000000" : buffer[i][2];
+
+            ctx.overwriteTextToFile("ssd_output.txt", value);
+            return true;
+        }
+
+        return false;
     }
 
 
