@@ -33,12 +33,12 @@ struct SSDContext {
 	}
 
 	string handleErrorReturn() {
-		overwriteTextToFile("output.txt", "ERROR");
+		overwriteTextToFile("ssd_output.txt", "ERROR");
 		return "";
 	}
 
 	void handleError() {
-		overwriteTextToFile("output.txt", "ERROR");
+		overwriteTextToFile("ssd_output.txt", "ERROR");
 	}
 };
 
@@ -94,7 +94,7 @@ void execute() override {
 	ctx.nand.close();
 
 	string output = (bytesRead == 0) ? "0x00000000" : readResult;
-	ctx.overwriteTextToFile("output.txt", output);
+	ctx.overwriteTextToFile("ssd_output.txt", output);
 }
 
 private:
