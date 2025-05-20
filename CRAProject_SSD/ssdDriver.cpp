@@ -56,7 +56,7 @@ public:
 	void execute() override {
 		if (checkInvalidInputForWrite() < 0) return ctx.handleError();
 		if (!ctx.openOrCreateNand(ios::in | ios::out)) return ctx.handleError();
-
+		
 		streampos offset = 10 * addr;
 		ctx.nand.seekp(offset);
 		ctx.nand << value;
@@ -98,7 +98,6 @@ public:
 	    streamsize bytesRead = ctx.nand.gcount();
 	    ctx.nand.close();
 
-
 	    string output = (bytesRead == 0) ? "0x00000000" : readResult;
 	    ctx.overwriteTextToFile("ssd_output.txt", output);
     }
@@ -112,13 +111,13 @@ class EraseCommand : public Command {
 public:
 	EraseCommand(SSDContext& context, int addr, string size)
 		: ctx(context), addr(addr) {
-		eraseSize = atoi(size.c_str());
+		eraseSize = stoi(size);
 	}
 	void execute() override {
 		if ((addr < 0 || addr >= LBA_MAX) ||
-			(!ctx.openOrCreateNand(ios::in | ios::out)) ||
-			(addr + eraseSize > LBA_MAX)) {
-			ctx.handleError();
+			(addr + eraseSize > LBA_MAX) ||
+			(!ctx.openOrCreateNand(ios::in | ios::out))) {
+			return ctx.handleError();
 		}
 
 		for (int offsetIdx = 0; offsetIdx < eraseSize; offsetIdx++) {
