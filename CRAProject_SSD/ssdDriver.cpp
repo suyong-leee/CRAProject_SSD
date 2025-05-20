@@ -1,8 +1,11 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <sstream>
+#include <filesystem>
 
 using namespace std;
+using namespace std::filesystem;
 
 class Command {
 public:
@@ -84,8 +87,8 @@ public:
 }
 
     void execute() override {
-	    if (addr < 0 || addr >= LBA_MAX) return (void)ctx.handleErrorReturn();
-	    if (!ctx.openOrCreateNand(ios::in)) return (void)ctx.handleErrorReturn();
+	    if (addr < 0 || addr >= LBA_MAX) return ctx.handleError();
+	    if (!ctx.openOrCreateNand(ios::in)) return ctx.handleError();
 
         string readResult(10, '\0');
 	    streampos offset = 10 * addr;
@@ -97,7 +100,7 @@ public:
 
 
 	    string output = (bytesRead == 0) ? "0x00000000" : readResult;
-	    ctx.overwriteTextToFile("output.txt", output);
+	    ctx.overwriteTextToFile("ssd_output.txt", output);
     }
 
 private:
@@ -131,12 +134,21 @@ private:
 	int eraseSize;
 };
 
+class NoopCommand : public Command
+{
+public:
+	void execute() override {}
+};
+
 class SSDDriver {
 public:
 	void run(int argc, char* argv[]) {
 
 		if (argc <= 1) return ctx.handleError();
-		
+
+		vector<string> fileNames = createAndReadFiles();
+		vector<vector<string>> buffer = parseFileNamse(fileNames);
+
 		vector<string> args = parseArguments(argc, argv);
 		string command = args[0];
 		int addr = stoi(args[1]);
@@ -145,13 +157,21 @@ public:
 		
 		try {
 			if (command == "W") {
+				//cmd = make_unique<NoopCommand>();
 				cmd = make_unique<WriteCommand>(ctx, addr, args[2]);
+				addCommandBuffer(buffer, args);
+
+				writeCommandBuffer(buffer);
 			}
 			else if (command == "R") {
 				cmd = make_unique<ReadCommand>(ctx, addr);
 			}
 			else if (command == "E") {
+				//cmd = make_unique<NoopCommand>();
 				cmd = make_unique<EraseCommand>(ctx, addr, args[2]);
+				addCommandBuffer(buffer, args);
+
+				writeCommandBuffer(buffer);
 			}
 			else {
 				return ctx.handleError();
@@ -174,6 +194,124 @@ private:
 		}
 		return args;
 	}
+
+	vector<string> createAndReadFiles(void)
+	{
+		vector<string> names;
+		try {
+			string dirPath = "./buffer";
+	
+			// Check And Create
+			path p(dirPath);
+			if (!exists(p)) {
+				if (!create_directory(p)) {
+					throw runtime_error("Failed to create directory: " + dirPath);
+				}
+			}
+
+			vector<string> checkFiles;
+			for (const auto& entry : directory_iterator(dirPath)) {
+				if (entry.is_directory()) {
+					checkFiles.push_back(entry.path().filename().string());
+				}
+			}
+
+			if (checkFiles.size() == 0) {
+				for (int i = 1; i <= 5; ++i) {
+					string fileName = to_string(i) + "_empty";
+					path filePath = p / fileName;
+
+					ofstream ofs(filePath);
+					if (!ofs) {
+						throw runtime_error("Failed to create file: " + filePath.string());
+					}
+				}
+			}
+
+			// Read
+			for (const auto& entry : directory_iterator(dirPath)) {
+				if (!entry.is_regular_file()) continue;
+
+				names.push_back(entry.path().filename().string());
+			}
+		}
+		catch (const exception& err) {
+			ctx.handleError();
+			return vector<string>();
+		}
+
+		return names;
+	}
+
+	vector<string> split(const string& str, char delimiter = '_') {
+		vector<string> tokens;
+		string token;
+		stringstream ss(str);
+
+		while (getline(ss, token, delimiter)) {
+			tokens.push_back(token);
+		}
+
+		return tokens;
+	}
+
+	vector<vector<string>> parseFileNamse(vector<string> fileNames)
+	{
+		vector<vector<string>> result;
+		for (const string& fileName : fileNames)
+		{
+			vector<string> fileNameSpliteed = split(fileName);
+			fileNameSpliteed.erase(fileNameSpliteed.begin());
+
+			if (fileNameSpliteed[0] == "empty") continue;
+
+			result.push_back(fileNameSpliteed);
+		}
+
+		return result;
+	}
+
+	void addCommandBuffer(vector<vector<string>>& buffer, vector<string> args)
+	{
+		buffer.push_back(args);
+	}
+
+	string joinStrings(const vector<string> vec, const string delimiter = "_") {
+		string result;
+		for (size_t i = 0; i < vec.size(); ++i) {
+			result += vec[i];
+			if (i != vec.size() - 1) {
+				result += delimiter;
+			}
+		}
+		return result;
+	}
+
+	void writeCommandBuffer(vector<vector<string>> buffer)
+	{
+		while (buffer.size() < 5) buffer.push_back(vector<string>({ "empty" }));
+
+		path dirPath = "./buffer";
+		for (const auto& entry : directory_iterator(dirPath)) {
+			if (entry.is_regular_file()) {
+				std::error_code ec;
+				remove(entry.path(), ec);
+				if (ec) return ctx.handleError();
+			}
+		}
+
+		for (int i = 0; i < buffer.size(); i++) {
+			string fileName = to_string(i + 1) + "_" +  joinStrings(buffer[i]);
+
+			path filePath = dirPath / fileName;
+
+			ofstream ofs(filePath);
+			if (!ofs) return ctx.handleError();
+			
+			ofs.close();
+		}
+	}
+
 
 	friend class SddDriverTestFixture;
 };

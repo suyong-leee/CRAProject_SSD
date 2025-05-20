@@ -221,7 +221,7 @@ TEST_F(SddDriverTestFixture, EraseSuccess)
 	ReadCommand readCmd(ctx, 0);
 	readCmd.execute();
 
-	string data = readFileAsString("output.txt");
+	string data = readFileAsString("ssd_output.txt");
 	EXPECT_EQ("0x00000000", data);
 }
 
@@ -237,7 +237,7 @@ TEST_F(SddDriverTestFixture, EraseFailOutOfRange)
 	ReadCommand readCmd(ctx, 0);
 	readCmd.execute();
 
-	string data = readFileAsString("output.txt");
+	string data = readFileAsString("ssd_output.txt");
 	EXPECT_EQ("0x11111111", data);
 }
 
@@ -257,7 +257,44 @@ TEST_F(SddDriverTestFixture, EraseSuccessInManyPages)
 		ReadCommand readCmd(ctx, 0);
 		readCmd.execute();
 
-		string data = readFileAsString("output.txt");
+		string data = readFileAsString("ssd_output.txt");
 		EXPECT_EQ("0x00000000", data);
+	}
+}
+
+TEST_F(SddDriverTestFixture, TC1CommandBufferTest)
+{
+	// Delete All Files in Directory
+	path dirPath("./buffer");
+	for (const auto& entry : directory_iterator(dirPath)) {
+		if (entry.is_regular_file()) {
+			std::error_code ec;
+			remove(entry.path(), ec);
+			if (ec) return ctx.handleError();
+		}
+	}
+	const char* argv1[] = { "ssd.exe", "E", "9", "3" };
+	int argc1 = 4;
+
+	ssdDriver->run(argc1, const_cast<char**>(argv1));
+
+	const char* argv2[] = { "ssd.exe", "W", "10", "0xAB12CD34" };
+	int argc2 = 4;
+
+	ssdDriver->run(argc2, const_cast<char**>(argv2));
+
+	const char* argv3[] = { "ssd.exe", "W", "13", "0xE5E5E5E5" };
+	int argc3 = 4;
+
+	ssdDriver->run(argc3, const_cast<char**>(argv3));
+
+	// Read All Files in Directory
+	int correctFileNamesIdx = 0;
+	vector<string> correctFileNames = { "1_E_9_3", "2_W_10_0xAB12CD34", "3_W_13_0xE5E5E5E5", "4_empty", "5_empty" };
+	for (const auto& entry : directory_iterator(dirPath)) {
+		if (!entry.is_regular_file()) continue;
+
+		string fileName = entry.path().filename().string();
+		EXPECT_EQ(correctFileNames[correctFileNamesIdx++], fileName);
 	}
 }
