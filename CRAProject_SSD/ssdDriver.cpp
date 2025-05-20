@@ -115,8 +115,8 @@ public:
     }
     void execute() override {
         if ((addr < 0 || addr >= LBA_MAX) ||
-            (!ctx.openOrCreateNand(ios::in | ios::out)) ||
-            (addr + eraseSize > LBA_MAX)) {
+            (addr + eraseSize > LBA_MAX) ||
+            (!ctx.openOrCreateNand(ios::in | ios::out))) {
             ctx.handleError();
         }
 
