@@ -35,12 +35,12 @@ struct SSDContext {
 	}
 
 	string handleErrorReturn() {
-		overwriteTextToFile("output.txt", "ERROR");
+		overwriteTextToFile("ssd_output.txt", "ERROR");
 		return "";
 	}
 
 	void handleError() {
-		overwriteTextToFile("output.txt", "ERROR");
+		overwriteTextToFile("ssd_output.txt", "ERROR");
 	}
 };
 
@@ -94,6 +94,7 @@ public:
 	    ctx.nand.read(&readResult[0], 10);
 	    streamsize bytesRead = ctx.nand.gcount();
 	    ctx.nand.close();
+
 
 	    string output = (bytesRead == 0) ? "0x00000000" : readResult;
 	    ctx.overwriteTextToFile("output.txt", output);

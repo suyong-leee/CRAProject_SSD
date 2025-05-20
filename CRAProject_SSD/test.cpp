@@ -10,7 +10,7 @@ protected:
 		ssdDriver = new SSDDriver;
 		srand(static_cast<unsigned int>(time(nullptr)));
 		overwriteTextToFile("ssd_nand.txt", "");
-		overwriteTextToFile("output.txt", "");
+		overwriteTextToFile("ssd_output.txt", "");
 	}
 public:
 	SSDContext ctx;
@@ -53,7 +53,7 @@ TEST_F(SddDriverTestFixture, TC0EmptyRead)
 	ReadCommand readCmd(ctx, 0);
 	readCmd.execute();
 
-	string dataFromOutputText = readFileAsString("output.txt");
+	string dataFromOutputText = readFileAsString("ssd_output.txt");
 
 	EXPECT_EQ("0x00000000", dataFromOutputText);
 }
@@ -66,7 +66,7 @@ TEST_F(SddDriverTestFixture, TC1correctWrite)
 	ReadCommand readCmd(ctx, 0);
 	readCmd.execute();
 
-	string data = readFileAsString("output.txt");
+	string data = readFileAsString("ssd_output.txt");
 	EXPECT_EQ("0x11111111", data);
 }
 
@@ -81,7 +81,7 @@ TEST_F(SddDriverTestFixture, TC2correctWriteSeveralTimes)
 		ReadCommand readCmd(ctx, i);
 		readCmd.execute();
 
-		string dataFromOutputText = readFileAsString("output.txt");
+		string dataFromOutputText = readFileAsString("ssd_output.txt");
 
 		EXPECT_EQ(hex, dataFromOutputText);
 	}
@@ -98,7 +98,7 @@ TEST_F(SddDriverTestFixture, TC3correctWriteInOffset)
 		ReadCommand readCmd(ctx, i * 5);
 		readCmd.execute();
 
-		string dataFromOutputText = readFileAsString("output.txt");
+		string dataFromOutputText = readFileAsString("ssd_output.txt");
 
 		EXPECT_EQ(hex, dataFromOutputText);
 	}
@@ -112,7 +112,7 @@ TEST_F(SddDriverTestFixture, TC4WriteInWrongPosition)
 	ReadCommand readCmd(ctx, 120);
 	readCmd.execute();
 
-	string data = readFileAsString("output.txt");
+	string data = readFileAsString("ssd_output.txt");
 
 	EXPECT_NE("0x1234AAAA", data); 
 }
@@ -128,7 +128,7 @@ TEST_F(SddDriverTestFixture, TC5WriteWithShortInputFormat)
 	ReadCommand readCmd(ctx, addr);
 	readCmd.execute();
 
-	string data = readFileAsString("output.txt").substr(0, 6);
+	string data = readFileAsString("ssd_output.txt").substr(0, 6);
 
 	EXPECT_NE("0xBBBB", data);
 }
@@ -144,7 +144,7 @@ TEST_F(SddDriverTestFixture, TC5WriteWithNotStart0xFormat)
 	ReadCommand readCmd(ctx, addr);
 	readCmd.execute();
 
-	string data = readFileAsString("output.txt");
+	string data = readFileAsString("ssd_output.txt");
 
 	EXPECT_NE("0XBBBBAEDE", data);
 }
@@ -160,7 +160,7 @@ TEST_F(SddDriverTestFixture, TC5WriteWithNotNumber)
 	ReadCommand readCmd(ctx, addr);
 	readCmd.execute();
 
-	string data = readFileAsString("output.txt");
+	string data = readFileAsString("ssd_output.txt");
 
 	EXPECT_NE("0xZEBBAEDE", data);
 }
