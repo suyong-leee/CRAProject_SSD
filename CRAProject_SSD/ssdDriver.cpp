@@ -43,14 +43,16 @@ public:
 
 		streampos readOffset = 10 * addr;
 
-		std::string result(10, '\0');
+		string readResult(10, '\0');
 		nand.seekp(readOffset);
-		nand.read(&result[0], 10);
+		nand.read(&readResult[0], 10);
+		std::streamsize bytesRead = nand.gcount();
 		nand.close();
 
-		overwriteTextToFile("output.txt", result);
+		string output = bytesRead == 0 ? "0x00000000" : readResult;
+		overwriteTextToFile("output.txt", output);
 
-		return result;
+		return output;
 	}
 
 private:
@@ -68,7 +70,7 @@ private:
 		overwriteTextToFile("output.txt", "ERROR");
 	}
 
-	void overwriteTextToFile(string fileName, string text)
+	static void overwriteTextToFile(string fileName, string text)
 	{
 		ofstream file(fileName);
 		if (file.is_open() == false) {

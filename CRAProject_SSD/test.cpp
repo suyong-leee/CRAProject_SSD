@@ -11,10 +11,15 @@ protected:
 		srand(static_cast<unsigned int>(time(nullptr)));
 	}
 public:
-	SSDDriver * ssdDriver;
+	SSDDriver* ssdDriver;
 
-	std::vector<std::string> parseArguments(int argc, char* argv[]) {
+	vector<std::string> parseArguments(int argc, char* argv[]) {
 		return SSDDriver::parseArguments(argc, argv);
+	}
+
+	void overwriteTextToFile(string fileName, string text)
+	{
+		return SSDDriver::overwriteTextToFile(fileName, text);
 	}
 
 	string getHex() {
@@ -28,8 +33,25 @@ public:
 		return result;
 	}
 
+	string readFileAsString(const string filename) {
+		ifstream file(filename);
+		stringstream buffer;
+		buffer << file.rdbuf();
+		return buffer.str();
+	}
+
 	friend class SSDDriver;
 };
+
+TEST_F(SddDriverTestFixture, TC0EmptyRead)
+{
+	overwriteTextToFile("ssd_nand.txt", "");
+	string dataFromNandText = ssdDriver->read(0);
+	string dataFromOutputText = readFileAsString("output.txt");
+
+	EXPECT_EQ("0x00000000", dataFromNandText);
+	EXPECT_EQ("0x00000000", dataFromOutputText);
+}
 
 TEST_F(SddDriverTestFixture, TC1correctWrite)
 {
@@ -41,30 +63,36 @@ TEST_F(SddDriverTestFixture, TC1correctWrite)
 
 TEST_F(SddDriverTestFixture, TC2correctWriteSeveralTimes)
 {
-	for (int i = 0;i < 10;i++) {
+	for (int i = 0; i < 10; i++) {
 		string hex = getHex();
 
 		ssdDriver->write(i, hex);
-		string data = ssdDriver->read(i);
-		EXPECT_EQ(hex, data);
+		string dataFromNandText = ssdDriver->read(i);
+		string dataFromOutputText = readFileAsString("output.txt");
+
+		EXPECT_EQ(hex, dataFromNandText);
+		EXPECT_EQ(hex, dataFromOutputText);
 	}
 }
 
 TEST_F(SddDriverTestFixture, TC3correctWriteInOffset)
 {
-	for (int i = 0;i < 10;i++) {
+	for (int i = 0; i < 10; i++) {
 		string hex = getHex();
 
-		ssdDriver->write(i*5, hex);
-		string data = ssdDriver->read(i * 5);
-		EXPECT_EQ(hex, data);
+		ssdDriver->write(i * 5, hex);
+		string dataFromNandText = ssdDriver->read(i * 5);
+		string dataFromOutputText = readFileAsString("output.txt");
+
+		EXPECT_EQ(hex, dataFromNandText);
+		EXPECT_EQ(hex, dataFromOutputText);
 	}
 }
 
 TEST_F(SddDriverTestFixture, TC4WriteInWrongPosition)
 {
 	ssdDriver->write(120, "0x1234AAAA");
-	
+
 	string data = ssdDriver->read(120);
 	EXPECT_NE("0x1234AAAA", data);
 }
@@ -112,7 +140,7 @@ public:
 TEST(RunCommand, TC1WriteCommand)
 {
 	MockSSDDriver mockSsdDriver;
-	const char* argv[] = {"ssd.exe", "W", "20", "0x1289CDEF" };
+	const char* argv[] = { "ssd.exe", "W", "20", "0x1289CDEF" };
 
 	EXPECT_CALL(mockSsdDriver, write(20, "0x1289CDEF"));
 	mockSsdDriver.run(4, const_cast<char**>(argv));
@@ -121,7 +149,7 @@ TEST(RunCommand, TC1WriteCommand)
 TEST(RunCommand, TC2ReadCommand)
 {
 	MockSSDDriver mockSsdDriver;
-	const char* argv[] = {"ssd.exe", "R", "20" };
+	const char* argv[] = { "ssd.exe", "R", "20" };
 
 	EXPECT_CALL(mockSsdDriver, read(20));
 	mockSsdDriver.run(3, const_cast<char**>(argv));
@@ -132,7 +160,7 @@ TEST_F(SddDriverTestFixture, EmptyArgument)
 	int argc = 1;
 	char* argv[1];
 	argv[0] = const_cast<char*>("ssd.exe");
-	
+
 	vector<string> args = parseArguments(argc, argv);
 
 	ASSERT_EQ(args.size(), 0);
@@ -169,3 +197,4 @@ TEST_F(SddDriverTestFixture, ReadArgument)
 	EXPECT_EQ(args[0], "R");
 	EXPECT_EQ(args[1], "20");
 }
+
