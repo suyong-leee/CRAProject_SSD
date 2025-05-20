@@ -175,7 +175,10 @@ public:
             if (command == "W" || command == "E") {
                 //commonbuffer control
                 int bufferCount = buffer.size();
-                if (bufferCount == 5) {
+                if (bufferCount >= 5) {
+                    //do nothing, temp code
+                }
+                else if (bufferCount == 5) {
                     //flush
                     cmd = make_unique<FlushCommand>();
                     //regist
@@ -309,6 +312,9 @@ public:
             else if (command == "E") {
                 //cmd = make_unique<NoopCommand>();
                 cmd = make_unique<EraseCommand>(ctx, addr, args[2]);
+            }
+            else if (command == "F") { // temp code
+                return;
             }
             else {
                 return ctx.handleError();
