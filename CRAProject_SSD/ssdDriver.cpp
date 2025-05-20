@@ -8,6 +8,8 @@ class Command {
 public:
 	virtual ~Command() = default;
 	virtual void execute() = 0;
+
+	const int LBA_MAX = 100;
 };
 
 struct SSDContext {
@@ -65,7 +67,7 @@ private:
 
 	int checkInvalidInputForWrite() {
 		const string valid = "0123456789ABCDEF";
-		if (addr < 0 || addr >= 100) return -1;
+		if (addr < 0 || addr >= LBA_MAX) return -1;
 		if (value.find("0x") != 0 || value.size() != 10) return -1;
 
 		for (int i = 2; i < 10; ++i) {
@@ -81,21 +83,21 @@ public:
 		: ctx(context), addr(addr) {
 }
 
-void execute() override {
-	if (addr < 0 || addr >= 100) return (void)ctx.handleErrorReturn();
-	if (!ctx.openOrCreateNand(ios::in)) return (void)ctx.handleErrorReturn();
+    void execute() override {
+	    if (addr < 0 || addr >= LBA_MAX) return (void)ctx.handleErrorReturn();
+	    if (!ctx.openOrCreateNand(ios::in)) return (void)ctx.handleErrorReturn();
 
-	string readResult(10, '\0');
-	streampos offset = 10 * addr;
+        string readResult(10, '\0');
+	    streampos offset = 10 * addr;
 
-	ctx.nand.seekp(offset);
-	ctx.nand.read(&readResult[0], 10);
-	streamsize bytesRead = ctx.nand.gcount();
-	ctx.nand.close();
+	    ctx.nand.seekp(offset);
+	    ctx.nand.read(&readResult[0], 10);
+	    streamsize bytesRead = ctx.nand.gcount();
+	    ctx.nand.close();
 
-	string output = (bytesRead == 0) ? "0x00000000" : readResult;
-	ctx.overwriteTextToFile("output.txt", output);
-}
+	    string output = (bytesRead == 0) ? "0x00000000" : readResult;
+	    ctx.overwriteTextToFile("output.txt", output);
+    }
 
 private:
 	SSDContext & ctx;
@@ -109,9 +111,9 @@ public:
 		eraseSize = atoi(size.c_str());
 	}
 	void execute() override {
-		if ((addr < 0 || addr >= 100) ||
+		if ((addr < 0 || addr >= LBA_MAX) ||
 			(!ctx.openOrCreateNand(ios::in | ios::out)) ||
-			(addr + eraseSize > 100)) {
+			(addr + eraseSize > LBA_MAX)) {
 			ctx.handleError();
 		}
 
@@ -125,7 +127,6 @@ public:
 private:
 	SSDContext& ctx;
 	int addr;
-	int eraseOffset;
 	int eraseSize;
 };
 
