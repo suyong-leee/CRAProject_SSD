@@ -363,3 +363,6 @@ MigrationBackup/
 FodyWeavers.xsd
 /CRAProject_SSD/ssd_nand.txt
 /CRAProject_SSD/ssd_output.txt
+/CRAProject_SSD/buffer
+/ssd_nand.txt
+/ssd_output.txt
