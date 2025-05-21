@@ -120,7 +120,7 @@ private:
 
 class FlushCommand : public Command {
 public:
-    FlushCommand(SSDContext& context, vector<vector<string>>& buffer)
+    FlushCommand(SSDContext& context,const vector<vector<string>>& buffer)
         : ctx(context), cmdbuffer(buffer) {
     }
     void execute() override {

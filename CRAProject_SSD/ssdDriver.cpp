@@ -15,29 +15,28 @@ using namespace std::filesystem;
 
 class SSDDriver {
 public:
+    CommandBufferManager& commandBufferManager = CommandBufferManager::getInstance();
+
     void run(int argc, char* argv[]) {
 
         if (argc <= 1) return ctx.handleError();
 
-        vector<string> fileNames = commandBufferManager.createAndReadFiles();
-        buffer = commandBufferManager.parseFileNames(fileNames);
         vector<string> args = parseArguments(argc, argv);
-
 
         if (isValid(args) == false) {
             return ctx.handleError();
         }
 
-        unique_ptr<Command> cmd = make_unique<FlushCommand>(ctx, buffer);
+        unique_ptr<Command> cmd = make_unique<NoopCommand>();
         string command = args[0];
         if (command == "W" || command == "E") {
-            cmd = processWE(args);
+            cmd = preprocessWE(args);
         }
         else if (command == "R") {
-            cmd = processR(args);
+            cmd = preprocessR(args);
         }
         else if (command == "F") {
-            cmd = processF(args);
+            cmd = preprocessF(args);
         }
         else {
             return ctx.handleError();
@@ -48,8 +47,6 @@ public:
 
 private:
     SSDContext ctx;
-    CommandBufferManager commandBufferManager{ ctx, "./buffer" };
-    vector<vector<string>> buffer;
 
     static vector<string> parseArguments(int argc, char* argv[]) {
         vector<string> args;
@@ -59,29 +56,22 @@ private:
         return args;
     }
 
-    unique_ptr<Command> processWE(vector<string> args)
-    {
+    unique_ptr<Command> preprocessWE(vector<string> args) {
         unique_ptr<Command> cmd = make_unique<NoopCommand>();
-        if (buffer.size() == 5) {
-            cmd = make_unique<FlushCommand>(ctx, buffer);
-            commandBufferManager.writeCommandBuffer({ args });
+        bool needFlush = commandBufferManager.pushCommandBuffer(args);
+        if (needFlush == true) {
+            cmd = make_unique<FlushCommand>(ctx, commandBufferManager.getBuffer());
         }
-        else if (buffer.size() == 0) {
-            buffer.push_back({ args });
-            commandBufferManager.writeCommandBuffer(buffer);
+        else {
+            cmd = make_unique<NoopCommand>();
         }
-        else
-        {
-            mergeAlgorithm(args, buffer);
-            commandBufferManager.writeCommandBuffer(buffer);
-        }
+
         return cmd;
     }
 
-    unique_ptr<Command> processR(vector<string> args)
-    {
+    unique_ptr<Command> preprocessR(vector<string> args) {
         unique_ptr<Command> cmd = make_unique<NoopCommand>();
-        string value = commandBufferManager.getCommand(args, buffer);
+        string value = commandBufferManager.getCommand(args);
         if (value == "") {
             cmd = make_unique<ReadCommand>(ctx, stoi(args[1]));
         }
@@ -91,92 +81,11 @@ private:
         return cmd;
     }
 
-    unique_ptr<Command> processF(vector<string> args)
-    {
+    unique_ptr<Command> preprocessF(vector<string> args) {
         unique_ptr<Command> cmd = make_unique<NoopCommand>();
-        cmd = make_unique<FlushCommand>(ctx, buffer);
+        cmd = make_unique<FlushCommand>(ctx, commandBufferManager.getBuffer());
         commandBufferManager.eraseAll();
         return cmd;
-    }
-
-    void mergeAlgorithm(vector<string> args, vector<vector<string>>& buffer)
-    {
-        string command = args[0];
-        int bufferCount = buffer.size();
-
-        if (command == "W") {
-            for (int i = 0; i < bufferCount; i++) {
-                if (buffer[i][0] == "W" && buffer[i][1] == args[1]) {
-                    buffer.erase(buffer.begin() + i);
-                    bufferCount--;
-                    i--;
-                }
-            }
-            buffer.push_back({ command,args[1],args[2] });
-        }
-        else if (command == "E") {
-            for (int i = 0; i < bufferCount; i++) {
-                if (buffer[i][0] == "W") {
-                    if ((stoi(buffer[i][1]) >= stoi(args[1])) && (stoi(buffer[i][1]) < (stoi(args[1]) + stoi(args[2])))) {
-                        buffer.erase(buffer.begin() + i);
-                        bufferCount--;
-                        i--;
-                    }
-                }
-            }
-            bufferCount = buffer.size();
-            int newStart = stoi(args[1]);
-            int newEnd = stoi(args[1]) + stoi(args[2]) - 1;
-            for (int i = bufferCount - 1; i >= 0; i--) {
-                if (buffer[i][0] == "E") {
-                    int targetStart = stoi(buffer[i][1]);
-                    int targetEnd = stoi(buffer[i][1]) + stoi(buffer[i][2]) - 1;
-
-                    if ((targetStart <= newStart) && (targetEnd <= newEnd)) {
-                        targetEnd = newEnd;
-                        bool merged = mergeBuffer(targetStart, targetEnd, newStart, newEnd, buffer[i]);
-                        if (merged) break;
-                    }
-                    else if ((targetStart >= newStart) && (targetEnd <= newEnd)) {
-                        targetStart = newStart;
-                        targetEnd = newEnd;
-                        bool merged = mergeBuffer(targetStart, targetEnd, newStart, newEnd, buffer[i]);
-                        if (merged) break;
-                    }
-                    else if ((targetStart <= newStart) && (targetEnd >= newEnd)) {
-                        bool merged = mergeBuffer(targetStart, targetEnd, newStart, newEnd, buffer[i]);
-                        if (merged) break;
-                    }
-                    else if ((targetStart >= newStart) && (targetEnd >= newEnd)) {
-                        targetStart = newStart;
-                        bool merged = mergeBuffer(targetStart, targetEnd, newStart, newEnd, buffer[i]);
-                        if (merged) break;
-                    }
-                }
-            }
-            if (newStart != -1) {
-                buffer.push_back({ command,to_string(newStart),to_string(newEnd - newStart + 1) });
-            }
-        }
-    }
-
-    bool mergeBuffer(int targetStart, int targetEnd, int& newStart, int& newEnd, vector<string>& command)
-    {
-        if (targetEnd - targetStart + 1 > 10)
-        {
-            newStart = targetStart + 10;
-            newEnd = targetEnd;
-            command[1] = to_string(targetStart);
-            command[2] = to_string(10);
-            return false;
-        }
-        else
-        {
-            command[1] = to_string(targetStart);
-            command[2] = to_string(targetEnd - targetStart + 1);
-            newStart = -1;
-            return true;
-        }
     }
 
     bool isValid(vector<string> args)
