@@ -274,7 +274,7 @@ TEST_F(SddDriverTestFixture, TC1CommandBufferTest)
 		if (entry.is_regular_file()) {
 			std::error_code ec;
 			remove(entry.path(), ec);
-			if (ec) return ctx.handleError();
+			if (ec) ctx.handleError();
 		}
 	}
 	const char* argv1[] = { "ssd.exe", "E", "9", "3" };
@@ -303,29 +303,31 @@ TEST_F(SddDriverTestFixture, TC1CommandBufferTest)
 	}
 }
 
-TEST_F(SddDriverTestFixture, TC1FastReadExactErase)
+TEST_F(SddDriverTestFixture, FastReadExactErase)
 {
-	vector<vector<string>> buffer = {
-		{"E", "9", "3"},
-		{"W", "10", "0x17654897"}
-	};
+	const char* argv1[] = { "ssd.exe", "E", "9", "3" };
+	const char* argv2[] = { "ssd.exe", "W", "10", "0x17654897" };
+	const char* argv3[] = { "ssd.exe", "R", "9" };
 
-	vector<string> args = { "R", "9" };
-	string readResult = fastRead(args, buffer);
+	ssdDriver->run(4, const_cast<char**>(argv1));
+	ssdDriver->run(4, const_cast<char**>(argv2));
+	ssdDriver->run(3, const_cast<char**>(argv3));
 
+	string readResult = readFileAsString("ssd_output.txt");
 	EXPECT_EQ("0x00000000", readResult);
 }
 
-TEST_F(SddDriverTestFixture, TC1FastReadProxyErase)
+TEST_F(SddDriverTestFixture, EraseDuplicatedArea)
 {
-	vector<vector<string>> buffer = {
-		{"E", "9", "3"},
-		{"W", "10", "0x17654897"}
-	};
+	const char* argv1[] = { "ssd.exe", "E", "9", "9" };
+	const char* argv2[] = { "ssd.exe", "E", "10", "2" };
+	const char* argv3[] = { "ssd.exe", "R", "11" };
 
-	vector<string> args = { "R", "11" };
-	string readResult = fastRead(args, buffer);
+	ssdDriver->run(4, const_cast<char**>(argv1));
+	ssdDriver->run(4, const_cast<char**>(argv2));
+	ssdDriver->run(3, const_cast<char**>(argv3));
 
+	string readResult = readFileAsString("ssd_output.txt");
 	EXPECT_EQ("0x00000000", readResult);
 }
 
