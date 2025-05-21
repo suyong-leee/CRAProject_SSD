@@ -177,7 +177,8 @@ public:
                 int bufferCount = buffer.size();
                 if (bufferCount == 5) {
                     //flush
-                    cmd = make_unique<FlushCommand>();
+                    cmd = make_unique<FlushCommand>(ctx, buffer);
+                    cmd->execute();
                     //regist
                     buffer.push_back({command,args[1],args[2]});
                 }
@@ -309,6 +310,9 @@ public:
             else if (command == "E") {
                 //cmd = make_unique<NoopCommand>();
                 cmd = make_unique<EraseCommand>(ctx, addr, args[2]);
+            }
+            else if (command == "F") {
+                cmd = make_unique<FlushCommand>(ctx, buffer);
             }
             else {
                 return ctx.handleError();
