@@ -145,9 +145,9 @@ public:
                 unique_ptr<Command> cmd = make_unique<WriteCommand>(ctx, addr, cmdbuffer[i][2]);
                 cmd->execute();
             }
-            else if (cmdbuffer[i][0] == "R") {
+            else if (cmdbuffer[i][0] == "E") {
                 int addr = stoi(cmdbuffer[i][1]);
-                unique_ptr<Command> cmd = make_unique<ReadCommand>(ctx, addr);
+                unique_ptr<Command> cmd = make_unique<EraseCommand>(ctx, addr, cmdbuffer[i][2]);
                 cmd->execute();
             }
         }
