@@ -239,9 +239,11 @@ private:
         int bufferCount = buffer.size();
 
         if (command == "W") {
-            for (int i = bufferCount - 1; i >= 0; i--) {
+            for (int i = 0; i < bufferCount; i++) {
                 if (buffer[i][0] == "W" && buffer[i][1] == args[1]) {
                     buffer.erase(buffer.begin() + i);
+                    bufferCount--;
+                    i--;
                 }
             }
             buffer.push_back({ command,args[1],args[2] });
