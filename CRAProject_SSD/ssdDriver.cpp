@@ -170,7 +170,9 @@ public:
         unique_ptr<Command> cmd;
 
 
-        if (isValid(args) == false) return;
+        if (isValid(args) == false) {
+            return ctx.handleError();
+        }
 
         if (command == "W" || command == "E") {
             cmd = make_unique<NoopCommand>();
@@ -326,14 +328,20 @@ private:
                 if (valid.find(value[i]) == string::npos) return false;
             }
         }
+        else if (command == "R") {
+            int addr = stoi(args[1]);
+            if (addr < 0 || addr >= 100) return false;
+        }
         else if (command == "E") {
             int addr = stoi(args[1]);
             int value = stoi(args[2]);
 
             if (addr < 0 || addr >= 100) return false;
-            if (addr + value < 0 || addr + value >= 100) return false;
-            if (value == 0) return false;
+            if (addr + value < 0 || addr + value > 100) return false;
+            if (value < 0 || value > 10) return false;
         }
+
+        if (command != "W" && command != "E" && command != "F" && command != "R") return false;
 
         return true;
     }
