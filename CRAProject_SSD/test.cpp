@@ -11,10 +11,12 @@ protected:
 		srand(static_cast<unsigned int>(time(nullptr)));
 		overwriteTextToFile("ssd_nand.txt", "");
 		overwriteTextToFile("ssd_output.txt", "");
+		commandBufferManager.eraseAll();
 	}
 public:
 	SSDContext ctx;
 	SSDDriver* ssdDriver;
+	CommandBufferManager& commandBufferManager = CommandBufferManager::getInstance();
 
 	vector<std::string> parseArguments(int argc, char* argv[]) {
 		return SSDDriver::parseArguments(argc, argv);
@@ -27,12 +29,16 @@ public:
 
 	string fastRead(vector<string> args, vector<vector<string>> buffer)
 	{
-		return ssdDriver->commandBufferManager.getCommand(args, buffer);
+		commandBufferManager.setBuffer(buffer);
+		return commandBufferManager.getCommand(args);
 	}
 
-	void mergeAlgorithm(vector<string> args, vector<vector<string>>& buffer)
+	void mergeAlgorithm(vector<string> args, vector<vector<string>>& buffer) const
 	{
-		return ssdDriver->mergeAlgorithm(args, buffer);
+		commandBufferManager.setBuffer(buffer);
+		commandBufferManager.mergeAlgorithm(args);
+		buffer = commandBufferManager.getBuffer();
+		return;
 	}
 
 	string getHex() {
