@@ -69,11 +69,11 @@ private:
     string value;
 };
 
-class ReadCommand : public Command{
+class ReadCommand : public Command {
 public:
-    ReadCommand(SSDContext & context, int addr)
+    ReadCommand(SSDContext& context, int addr)
         : ctx(context), addr(addr) {
-}
+    }
 
     void execute() override {
         if (addr < 0 || addr >= LBA_MAX) return ctx.handleError();
@@ -92,7 +92,7 @@ public:
     }
 
 private:
-    SSDContext & ctx;
+    SSDContext& ctx;
     int addr;
 };
 
@@ -124,11 +124,11 @@ private:
 
 class FlushCommand : public Command {
 public:
-    FlushCommand(SSDContext& context, vector<vector<string>> &buffer)
+    FlushCommand(SSDContext& context, vector<vector<string>>& buffer)
         : ctx(context), cmdbuffer(buffer) {
     }
     void execute() override {
-        for (int i = 0;i < cmdbuffer.size(); i++) {
+        for (int i = 0; i < cmdbuffer.size(); i++) {
             if (cmdbuffer[i][0] == "W") {
                 int addr = stoi(cmdbuffer[i][1]);
                 unique_ptr<Command> cmd = make_unique<WriteCommand>(ctx, addr, cmdbuffer[i][2]);
@@ -166,170 +166,53 @@ public:
 
         vector<string> args = parseArguments(argc, argv);
         string command = args[0];
-        int addr = 0;
-        if (command != "F") {
-            addr = stoi(args[1]);
-        }
 
         unique_ptr<Command> cmd;
-        
+
         //erase 가드절 생성
         if (command == "E" && args[2] == "0")
         {
             return;
         }
 
-        try {
-            if (command == "W" || command == "E") {
-                cmd = make_unique<NoopCommand>();
-                //commonbuffer control
-                int bufferCount = buffer.size();
-                if (bufferCount == 5) {
-                    //flush
-                    cmd = make_unique<FlushCommand>(ctx, buffer);
-                    cmd->execute();
-                    commandBufferManager.eraseAll();
-                    //regist
-                    buffer.push_back({command,args[1],args[2]});
-                }
-                else if (bufferCount == 0) {
-                    //regist
-                    buffer.push_back({ command,args[1],args[2] });
-                }
-                else
-                {
-                    if (command == "W") {
-                        for (int i = bufferCount - 1; i >= 0; i--) {
-                            if (buffer[i][0] == "W" && buffer[i][1] == args[1]) {
-                                buffer.erase(buffer.begin() + i);
-                            }
-                        }
-                        buffer.push_back({ command,args[1],args[2] });
-                    }
-                    else if (command == "E") {
-                        for (int i = bufferCount - 1; i >= 0; i--) {
-                            if (buffer[i][0] == "W") {
-                                if ((stoi(buffer[i][1]) >= stoi(args[1])) && (stoi(buffer[i][1]) < (stoi(args[1]) + stoi(args[2])))) {
-                                    buffer.erase(buffer.begin() + i);
-                                }
-                            }
-                        }
-                        int newStart = stoi(args[1]);
-                        int newEnd = stoi(args[1]) + stoi(args[2]) - 1;
-                        for (int i = bufferCount - 1; i >= 0; i--) {
-                            if (buffer[i][0] == "E") {
-                                int targetStart = stoi(buffer[i][1]);
-                                int targetEnd = stoi(buffer[i][1]) + stoi(buffer[i][2]) - 1;
 
-                                if (targetEnd - targetStart + 1 == 10) {
-                                    continue;
-                                }
-                                if ((targetStart <= newStart) && (targetEnd <= newEnd)) {
-                                    targetEnd = newEnd;
-                                    if (targetEnd - targetStart + 1 > 10)
-                                    {
-                                        newStart = targetStart + 10;
-                                        newEnd = targetEnd;
-                                        buffer[i][1] = to_string(targetStart);
-                                        buffer[i][2] = to_string(10);
-                                    }
-                                    else
-                                    {
-                                        buffer[i][1] = to_string(targetStart);
-                                        buffer[i][2] = to_string(targetEnd - targetStart + 1);
-                                        newStart = -1;
-                                        break;
-                                    }
-                                }
-                                else if ((targetStart >= newStart) && (targetEnd <= newEnd)) {
-                                    targetStart = newStart;
-                                    targetEnd = newEnd;
-                                    if (targetEnd - targetStart + 1 > 10)
-                                    {
-                                        newStart = targetStart + 10;
-                                        newEnd = targetEnd;
-                                        buffer[i][1] = to_string(targetStart);
-                                        buffer[i][2] = to_string(10);
-                                    }
-                                    else
-                                    {
-                                        buffer[i][1] = to_string(targetStart);
-                                        buffer[i][2] = to_string(targetEnd - targetStart + 1);
-                                        newStart = -1;
-                                        break;
-                                    }
-                                }
-                                else if ((targetStart <= newStart) && (targetEnd >= newEnd)) {
-                                    targetEnd = newEnd;
-                                    if (targetEnd - targetStart + 1 > 10)
-                                    {
-                                        newStart = targetStart + 10;
-                                        newEnd = targetEnd;
-                                        buffer[i][1] = to_string(targetStart);
-                                        buffer[i][2] = to_string(10);
-                                    }
-                                    else
-                                    {
-                                        buffer[i][1] = to_string(targetStart);
-                                        buffer[i][2] = to_string(targetEnd - targetStart + 1);
-                                        newStart = -1;
-                                        break;
-                                    }
-                                }
-                                else if ((targetStart >= newStart) && (targetEnd >= newEnd)) {
-                                    targetStart = newStart;
-                                    if (targetEnd - targetStart + 1 > 10)
-                                    {
-                                        newStart = targetStart + 10;
-                                        newEnd = targetEnd;
-                                        buffer[i][1] = to_string(targetStart);
-                                        buffer[i][2] = to_string(10);
-                                    }
-                                    else
-                                    {
-                                        buffer[i][1] = to_string(targetStart);
-                                        buffer[i][2] = to_string(targetEnd - targetStart + 1);
-                                        newStart = -1;
-                                        break;
-                                    }
-                                }
+        if (command == "W" || command == "E") {
+            cmd = make_unique<NoopCommand>();
+            //commonbuffer control
+            if (buffer.size() == 5) {
+                //flush
+                unique_ptr<Command> flushCmd = make_unique<FlushCommand>(ctx, buffer);
+                flushCmd->execute();
+                commandBufferManager.eraseAll();
 
-                            }
-                        }
-                        if (newStart != -1) {
-                            buffer.push_back({ command,to_string(newStart),to_string(newEnd - newStart + 1) });
-                        }
-                    }
-                    else { //불가능한 케이스이긴함...
-                        return ctx.handleError();
-                    }
-                }
-                //end commonbuffer control
+                //regist
+                buffer.push_back({ command,args[1],args[2] });
             }
-            else if (command == "R") {
-                string value = commandBufferManager.getCommand(args, buffer);
-
-                if (value == "") {
-                    cmd = make_unique<ReadCommand>(ctx, addr);
-                }
-                else {
-                    cmd = make_unique<FastReadCommand>(ctx, value);
-                }
+            else if (buffer.size() == 0) {
+                //regist
+                buffer.push_back({ command,args[1],args[2] });
             }
-            else if (command == "F") {
-                cmd = make_unique<FlushCommand>(ctx, buffer);
+            else
+            {
+                mergeAlgorithm(args, buffer);
             }
-            else {
-                return ctx.handleError();
-            }
-            
-            commandBufferManager.writeCommandBuffer(buffer);
+            //end commonbuffer control
         }
-        catch (...) {
+        else if (command == "R") {
+            string value = commandBufferManager.getCommand(args, buffer);
+            cmd = value.empty() ? make_unique<ReadCommand>(ctx, stoi(args[1])) : make_unique<FastReadCommand>(ctx, value);
+        }
+        else if (command == "F") {
+            cmd = make_unique<FlushCommand>(ctx, buffer);
+        }
+        else {
             return ctx.handleError();
         }
 
+        commandBufferManager.writeCommandBuffer(buffer);
+
         cmd->execute();
+
         if (command == "F") {
             commandBufferManager.eraseAll();
         }
@@ -337,7 +220,7 @@ public:
 
 private:
     SSDContext ctx;
-    CommandBufferManager commandBufferManager{ctx, "./buffer" };
+    CommandBufferManager commandBufferManager{ ctx, "./buffer" };
 
     static vector<string> parseArguments(int argc, char* argv[]) {
         vector<string> args;
@@ -345,6 +228,80 @@ private:
             args.emplace_back(argv[i]);
         }
         return args;
+    }
+
+    void mergeAlgorithm(vector<string> args, vector<vector<string>>& buffer)
+    {
+        string command = args[0];
+        int bufferCount = buffer.size();
+
+        if (command == "W") {
+            for (int i = bufferCount - 1; i >= 0; i--) {
+                if (buffer[i][0] == "W" && buffer[i][1] == args[1]) {
+                    buffer.erase(buffer.begin() + i);
+                }
+            }
+            buffer.push_back({ command,args[1],args[2] });
+        }
+        else if (command == "E") {
+            for (int i = bufferCount - 1; i >= 0; i--) {
+                if (buffer[i][0] == "W") {
+                    if ((stoi(buffer[i][1]) >= stoi(args[1])) && (stoi(buffer[i][1]) < (stoi(args[1]) + stoi(args[2])))) {
+                        buffer.erase(buffer.begin() + i);
+                    }
+                }
+            }
+            int newStart = stoi(args[1]);
+            int newEnd = stoi(args[1]) + stoi(args[2]) - 1;
+            for (int i = bufferCount - 1; i >= 0; i--) {
+                if (buffer[i][0] == "E") {
+                    int targetStart = stoi(buffer[i][1]);
+                    int targetEnd = stoi(buffer[i][1]) + stoi(buffer[i][2]) - 1;
+
+                    if (targetEnd - targetStart + 1 == 10) {
+                        continue;
+                    }
+                    if ((targetStart <= newStart) && (targetEnd <= newEnd)) {
+                        targetEnd = newEnd;
+                    }
+                    else if ((targetStart >= newStart) && (targetEnd <= newEnd)) {
+                        targetStart = newStart;
+                        targetEnd = newEnd;
+                    }
+                    else if ((targetStart <= newStart) && (targetEnd >= newEnd)) {
+                        targetEnd = newEnd;
+                    }
+                    else if ((targetStart >= newStart) && (targetEnd >= newEnd)) {
+                        targetStart = newStart;
+                    }
+
+                    bool merged = mergeBuffer(targetStart, targetEnd, newStart, newEnd, buffer[i]);
+                    if (merged) break;
+                }
+            }
+            if (newStart != -1) {
+                buffer.push_back({ command,to_string(newStart),to_string(newEnd - newStart + 1) });
+            }
+        }
+    }
+
+    bool mergeBuffer(int targetStart, int targetEnd, int& newStart, int& newEnd, vector<string>& command)
+    {
+        if (targetEnd - targetStart + 1 > 10)
+        {
+            newStart = targetStart + 10;
+            newEnd = targetEnd;
+            command[1] = to_string(targetStart);
+            command[2] = to_string(10);
+            return false;
+        }
+        else
+        {
+            command[1] = to_string(targetStart);
+            command[2] = to_string(targetEnd - targetStart + 1);
+            newStart = -1;
+            return true;
+        }
     }
 
     friend class SddDriverTestFixture;
