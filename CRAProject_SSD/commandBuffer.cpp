@@ -123,6 +123,29 @@ public:
         }
     }
 
+    void eraseAll(void)
+    {
+        path p(dirPath);
+
+        // Delete All Files in Directory
+        for (const auto& entry : directory_iterator(p)) {
+            if (entry.is_regular_file()) {
+                std::error_code ec;
+                remove(entry.path(), ec);
+                if (ec) return ctx.handleError();
+            }
+        }
+
+        for (int i = 1; i <= 5; ++i) {
+            string fileName = to_string(i) + "_empty";
+            path filePath = p / fileName;
+            ofstream ofs(filePath);
+            if (!ofs) {
+                throw runtime_error("Failed to create file: " + filePath.string());
+            }
+        }        
+    }
+
 private:
     string dirPath;
     SSDContext& ctx;
