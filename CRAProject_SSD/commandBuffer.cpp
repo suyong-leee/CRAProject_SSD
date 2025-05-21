@@ -78,6 +78,26 @@ public:
         buffer.push_back(args);
     }
 
+    string getCommand(vector<string>& args, vector<vector<string>> buffer)
+    {
+        int addr = stoi(args[1]);
+        for (int i = (int)buffer.size() - 1; i >= 0; i--) {
+            string command = buffer[i][0];
+            if (command != "W" && command != "E") continue;
+
+            int commandAddr = stoi(buffer[i][1]);
+            int commandAddrSize = command == "E" ? stoi(buffer[i][2]) : 1;
+            if (addr < commandAddr || addr >= commandAddr + commandAddrSize) continue;
+
+            string value = command == "E" ? "0x00000000" : buffer[i][2];
+
+            
+            return value;
+        }
+
+        return "";
+    }
+
     void writeCommandBuffer(const vector<vector<string>>& bufferInput) {
         vector<vector<string>> buffer = bufferInput;
         while (buffer.size() < 5) buffer.push_back({ "empty" });

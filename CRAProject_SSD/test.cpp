@@ -25,9 +25,9 @@ public:
 		return SSDContext::overwriteTextToFile(fileName, text);
 	}
 
-	bool fastRead(vector<string> args, vector<vector<string>> buffer)
+	string fastRead(vector<string> args, vector<vector<string>> buffer)
 	{
-		return ssdDriver->fastRead(args, buffer);
+		return ssdDriver->commandBufferManager.getCommand(args, buffer);
 	}
 
 	string getHex() {
@@ -311,11 +311,9 @@ TEST_F(SddDriverTestFixture, TC1FastReadExactErase)
 	};
 
 	vector<string> args = { "R", "9" };
-	bool readResult = fastRead(args, buffer);
-	string outputResult = readFileAsString("ssd_output.txt");
+	string readResult = fastRead(args, buffer);
 
-	EXPECT_EQ(true, readResult);
-	EXPECT_EQ("0x00000000", outputResult);
+	EXPECT_EQ("0x00000000", readResult);
 }
 
 TEST_F(SddDriverTestFixture, TC1FastReadProxyErase)
@@ -326,11 +324,9 @@ TEST_F(SddDriverTestFixture, TC1FastReadProxyErase)
 	};
 
 	vector<string> args = { "R", "11" };
-	bool readResult = fastRead(args, buffer);
-	string outputResult = readFileAsString("ssd_output.txt");
+	string readResult = fastRead(args, buffer);
 
-	EXPECT_EQ(true, readResult);
-	EXPECT_EQ("0x00000000", outputResult);
+	EXPECT_EQ("0x00000000", readResult);
 }
 
 TEST_F(SddDriverTestFixture, TC1FastReadNotInRange)
@@ -341,9 +337,9 @@ TEST_F(SddDriverTestFixture, TC1FastReadNotInRange)
 	};
 
 	vector<string> args = { "R", "12" };
-	bool readResult = fastRead(args, buffer);
+	string readResult = fastRead(args, buffer);
 
-	EXPECT_EQ(false, readResult);
+	EXPECT_EQ("", readResult);
 }
 
 
@@ -355,11 +351,9 @@ TEST_F(SddDriverTestFixture, TC1FastReadExactWrite)
 	};
 
 	vector<string> args = { "R", "10" };
-	bool readResult = fastRead(args, buffer);
-	string outputResult = readFileAsString("ssd_output.txt");
+	string readResult = fastRead(args, buffer);
 
-	EXPECT_EQ(true, readResult);
-	EXPECT_EQ("0x17654897", outputResult);
+	EXPECT_EQ("0x17654897", readResult);
 }
 
 TEST_F(SddDriverTestFixture, TC1FastReadMultipleExactErase)
@@ -371,11 +365,9 @@ TEST_F(SddDriverTestFixture, TC1FastReadMultipleExactErase)
 	};
 
 	vector<string> args = { "R", "10" };
-	bool readResult = fastRead(args, buffer);
-	string outputResult = readFileAsString("ssd_output.txt");
+	string readResult = fastRead(args, buffer);
 
-	EXPECT_EQ(true, readResult);
-	EXPECT_EQ("0x00000000", outputResult);
+	EXPECT_EQ("0x00000000", readResult);
 }
 
 TEST_F(SddDriverTestFixture, TC1FastReadMultipleExactWrite)
@@ -387,11 +379,9 @@ TEST_F(SddDriverTestFixture, TC1FastReadMultipleExactWrite)
 	};
 
 	vector<string> args = { "R", "11" };
-	bool readResult = fastRead(args, buffer);
-	string outputResult = readFileAsString("ssd_output.txt");
+	string readResult = fastRead(args, buffer);
 
-	EXPECT_EQ(true, readResult);
-	EXPECT_EQ("0xE45ACC45", outputResult);
+	EXPECT_EQ("0xE45ACC45", readResult);
 }
 
 TEST_F(SddDriverTestFixture, ForceToFlush)
