@@ -182,6 +182,7 @@ public:
                 unique_ptr<Command> flushCmd = make_unique<FlushCommand>(ctx, buffer);
                 flushCmd->execute();
                 commandBufferManager.eraseAll();
+                buffer.clear();
 
                 //regist
                 buffer.push_back({ command,args[1],args[2] });
