@@ -278,7 +278,6 @@ private:
                         if (merged) break;
                     }
                     else if ((targetStart <= newStart) && (targetEnd >= newEnd)) {
-                        targetEnd = newEnd;
                         bool merged = mergeBuffer(targetStart, targetEnd, newStart, newEnd, buffer[i]);
                         if (merged) break;
                     }
