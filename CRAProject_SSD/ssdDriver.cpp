@@ -175,12 +175,9 @@ public:
             if (command == "W" || command == "E") {
                 //commonbuffer control
                 int bufferCount = buffer.size();
-                if (bufferCount >= 5) {
-                    //do nothing, temp code
-                }
-                else if (bufferCount == 5) {
+                if (bufferCount == 5) {
                     //flush
-                    cmd = make_unique<FlushCommand>();
+                    cmd = make_unique<FlushCommand>(ctx, buffer);
                     //regist
                     buffer.push_back({command,args[1],args[2]});
                 }
@@ -298,23 +295,13 @@ public:
                 }
                 //end commonbuffer control
             }
-            //추후에 아래 if문 과 통합
-
-            if (command == "W") {
-                //cmd = make_unique<NoopCommand>();
-                cmd = make_unique<WriteCommand>(ctx, addr, args[2]);
-            }
             else if (command == "R") {
                 if (fastRead(args, buffer) == false) {
                     cmd = make_unique<ReadCommand>(ctx, addr);
                 }
             }
-            else if (command == "E") {
-                //cmd = make_unique<NoopCommand>();
-                cmd = make_unique<EraseCommand>(ctx, addr, args[2]);
-            }
             else if (command == "F") { // temp code
-                return;
+                cmd = make_unique<FlushCommand>(ctx, buffer);
             }
             else {
                 return ctx.handleError();
