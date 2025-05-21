@@ -54,6 +54,21 @@ private:
     }
 };
 
+class FastReadCommand : public Command {
+public:
+    FastReadCommand(SSDContext& context, string& value)
+        : ctx(context), value(value) {
+    }
+
+    void execute() override {
+        ctx.overwriteTextToFile("ssd_output.txt", value);
+    }
+
+private:
+    SSDContext& ctx;
+    string value;
+};
+
 class ReadCommand : public Command{
 public:
     ReadCommand(SSDContext & context, int addr)
@@ -292,8 +307,13 @@ public:
                 //end commonbuffer control
             }
             else if (command == "R") {
-                if (fastRead(args, buffer) == false) {
+                string value = commandBufferManager.getCommand(args, buffer);
+
+                if (value == "") {
                     cmd = make_unique<ReadCommand>(ctx, addr);
+                }
+                else {
+                    cmd = make_unique<FastReadCommand>(ctx, value);
                 }
             }
             else if (command == "F") {
@@ -323,27 +343,6 @@ private:
         }
         return args;
     }
-
-    bool fastRead(vector<string> args, vector<vector<string>> buffer)
-    {
-        int addr = stoi(args[1]);
-        for (int i = (int)buffer.size() - 1; i >= 0; i--) {
-            string command = buffer[i][0];
-            if (command != "W" && command != "E") continue;
-
-            int commandAddr = stoi(buffer[i][1]);
-            int commandAddrSize = command == "E" ? stoi(buffer[i][2]) : 1;
-            if (addr < commandAddr || addr >= commandAddr + commandAddrSize) continue;
-
-            string value = command == "E" ? "0x00000000" : buffer[i][2];
-
-            ctx.overwriteTextToFile("ssd_output.txt", value);
-            return true;
-        }
-
-        return false;
-    }
-
 
     friend class SddDriverTestFixture;
 };
