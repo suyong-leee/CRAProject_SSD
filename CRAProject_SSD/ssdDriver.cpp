@@ -188,7 +188,7 @@ public:
                     //flush
                     cmd = make_unique<FlushCommand>(ctx, buffer);
                     cmd->execute();
-
+                    commandBufferManager.eraseAll();
                     //regist
                     buffer.push_back({command,args[1],args[2]});
                 }
@@ -330,6 +330,9 @@ public:
         }
 
         cmd->execute();
+        if (command == "F") {
+            commandBufferManager.eraseAll();
+        }
     }
 
 private:
