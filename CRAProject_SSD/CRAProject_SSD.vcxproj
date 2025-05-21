@@ -129,6 +129,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="command.cpp" />
     <ClCompile Include="commandBuffer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ssdContext.cpp" />
