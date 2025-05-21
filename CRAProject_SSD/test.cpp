@@ -303,7 +303,6 @@ TEST_F(SddDriverTestFixture, TC1CommandBufferTest)
 	}
 }
 
-<<<<<<< HEAD
 TEST_F(SddDriverTestFixture, TC1FastReadExactErase)
 {
 	vector<vector<string>> buffer = {
@@ -397,12 +396,15 @@ TEST_F(SddDriverTestFixture, TC1FastReadMultipleExactWrite)
 
 TEST_F(SddDriverTestFixture, ForceToFlush)
 {
+	const char* argvFlush[] = { "ssd.exe", "F" };
 	const char* argv0[] = { "ssd.exe", "W", "0", "0x12345678" };
 	const char* argv1[] = { "ssd.exe", "W", "1", "0x12345678" };
 	const char* argv2[] = { "ssd.exe", "W", "2", "0x12345678" };
 	const char* argv3[] = { "ssd.exe", "W", "3", "0x12345678" };
 	const char* argv4[] = { "ssd.exe", "W", "4", "0x12345678" };
 	const char* argv5[] = { "ssd.exe", "W", "5", "0x12345678" };
+
+	ssdDriver->run(2, const_cast<char**>(argvFlush));
 
 	ssdDriver->run(4, const_cast<char**>(argv0));
 	ssdDriver->run(4, const_cast<char**>(argv1));
