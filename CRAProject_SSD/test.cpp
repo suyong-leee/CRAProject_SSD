@@ -395,26 +395,6 @@ TEST_F(SddDriverTestFixture, TC1FastReadMultipleExactWrite)
 	EXPECT_EQ("0xE45ACC45", readResult);
 }
 
-TEST_F(SddDriverTestFixture, ForceToFlush)
-{
-	const char* argvFlush[] = { "ssd.exe", "F" };
-	const char* argv0[] = { "ssd.exe", "W", "0", "0x12345678" };
-	const char* argv1[] = { "ssd.exe", "W", "1", "0x12345678" };
-	const char* argv2[] = { "ssd.exe", "W", "2", "0x12345678" };
-	const char* argv3[] = { "ssd.exe", "W", "3", "0x12345678" };
-	const char* argv4[] = { "ssd.exe", "W", "4", "0x12345678" };
-	const char* argv5[] = { "ssd.exe", "W", "5", "0x12345678" };
-
-	ssdDriver->run(2, const_cast<char**>(argvFlush));
-
-	ssdDriver->run(4, const_cast<char**>(argv0));
-	ssdDriver->run(4, const_cast<char**>(argv1));
-	ssdDriver->run(4, const_cast<char**>(argv2));
-	ssdDriver->run(4, const_cast<char**>(argv3));
-	ssdDriver->run(4, const_cast<char**>(argv4));
-	ssdDriver->run(4, const_cast<char**>(argv5));
-}
-
 TEST_F(SddDriverTestFixture, MergeAlgorithmEraseMerged)
 {
 	vector<vector<string>> buffer = 
@@ -690,7 +670,7 @@ TEST_F(SddDriverTestFixture, EraseWithInvalidStartBlock)
 {
 	const char* argv1[] = { "ssd.exe", "E", "-1", "9" };
 
-	ssdDriver->run(4, const_cast<char**>(argv1));
+	ssdDriver->run(sizeof(argv1) / sizeof(argv1[0]), const_cast<char**>(argv1));
 
 	string readResult = readFileAsString("ssd_output.txt");
 	EXPECT_EQ("ERROR", readResult);
@@ -700,7 +680,7 @@ TEST_F(SddDriverTestFixture, EraseWithStartBlockOutOfRange)
 {
 	const char* argv1[] = { "ssd.exe", "E", "101", "9" };
 
-	ssdDriver->run(4, const_cast<char**>(argv1));
+	ssdDriver->run(sizeof(argv1) / sizeof(argv1[0]), const_cast<char**>(argv1));
 
 	string readResult = readFileAsString("ssd_output.txt");
 	EXPECT_EQ("ERROR", readResult);
@@ -710,7 +690,7 @@ TEST_F(SddDriverTestFixture, EraseWithInvalidBlockRange)
 {
 	const char* argv1[] = { "ssd.exe", "E", "99", "9" };
 
-	ssdDriver->run(4, const_cast<char**>(argv1));
+	ssdDriver->run(sizeof(argv1) / sizeof(argv1[0]), const_cast<char**>(argv1));
 
 	string readResult = readFileAsString("ssd_output.txt");
 	EXPECT_EQ("ERROR", readResult);
@@ -720,7 +700,7 @@ TEST_F(SddDriverTestFixture, EraseWithBlockRangeExceedingLimit)
 {
 	const char* argv1[] = { "ssd.exe", "E", "5", "11" };
 
-	ssdDriver->run(4, const_cast<char**>(argv1));
+	ssdDriver->run(sizeof(argv1) / sizeof(argv1[0]), const_cast<char**>(argv1));
 
 	string readResult = readFileAsString("ssd_output.txt");
 	EXPECT_EQ("ERROR", readResult);
@@ -730,7 +710,7 @@ TEST_F(SddDriverTestFixture, EraseWithNegativeBlockCount)
 {
 	const char* argv1[] = { "ssd.exe", "E", "5", "-1" };
 
-	ssdDriver->run(4, const_cast<char**>(argv1));
+	ssdDriver->run(sizeof(argv1) / sizeof(argv1[0]), const_cast<char**>(argv1));
 
 	string readResult = readFileAsString("ssd_output.txt");
 	EXPECT_EQ("ERROR", readResult);
@@ -743,8 +723,8 @@ TEST_F(SddDriverTestFixture, EraseAndFlushWithValidInput)
 	const char* argv1[] = { "ssd.exe", "E", "0", "0" };
 	const char* argv2[] = { "ssd.exe", "F" };
 
-	ssdDriver->run(4, const_cast<char**>(argv1));
-	ssdDriver->run(2, const_cast<char**>(argv2));
+	ssdDriver->run(sizeof(argv1) / sizeof(argv1[0]), const_cast<char**>(argv1));
+	ssdDriver->run(sizeof(argv2) / sizeof(argv2[0]), const_cast<char**>(argv2));
 
 	string readResult = readFileAsString("ssd_output.txt");
 	EXPECT_EQ("", readResult);
@@ -754,7 +734,7 @@ TEST_F(SddDriverTestFixture, ReadWithNegativePageNumber)
 {
 	const char* argv1[] = { "ssd.exe", "R", "-1" };
 
-	ssdDriver->run(3, const_cast<char**>(argv1));
+	ssdDriver->run(sizeof(argv1) / sizeof(argv1[0]), const_cast<char**>(argv1));
 
 	string readResult = readFileAsString("ssd_output.txt");
 	EXPECT_EQ("ERROR", readResult);
@@ -764,7 +744,7 @@ TEST_F(SddDriverTestFixture, ReadWithPageNumberOutOfRange)
 {
 	const char* argv1[] = { "ssd.exe", "R", "100" };
 
-	ssdDriver->run(3, const_cast<char**>(argv1));
+	ssdDriver->run(sizeof(argv1) / sizeof(argv1[0]), const_cast<char**>(argv1));
 
 	string readResult = readFileAsString("ssd_output.txt");
 	EXPECT_EQ("ERROR", readResult);
@@ -774,7 +754,7 @@ TEST_F(SddDriverTestFixture, WriteWithNegativePageNumber)
 {
 	const char* argv1[] = { "ssd.exe", "W", "-1", "0x12345678" };
 
-	ssdDriver->run(4, const_cast<char**>(argv1));
+	ssdDriver->run(sizeof(argv1) / sizeof(argv1[0]), const_cast<char**>(argv1));
 
 	string readResult = readFileAsString("ssd_output.txt");
 	EXPECT_EQ("ERROR", readResult);
@@ -784,7 +764,7 @@ TEST_F(SddDriverTestFixture, WriteWithPageNumberOutOfRange)
 {
 	const char* argv1[] = { "ssd.exe", "W", "100", "0x12345678" };
 
-	ssdDriver->run(4, const_cast<char**>(argv1));
+	ssdDriver->run(sizeof(argv1) / sizeof(argv1[0]), const_cast<char**>(argv1));
 
 	string readResult = readFileAsString("ssd_output.txt");
 	EXPECT_EQ("ERROR", readResult);
@@ -794,7 +774,7 @@ TEST_F(SddDriverTestFixture, WriteWithInvalidHexCharacters)
 {
 	const char* argv1[] = { "ssd.exe", "W", "5", "0xZf1" };
 
-	ssdDriver->run(4, const_cast<char**>(argv1));
+	ssdDriver->run(sizeof(argv1) / sizeof(argv1[0]), const_cast<char**>(argv1));
 
 	string readResult = readFileAsString("ssd_output.txt");
 	EXPECT_EQ("ERROR", readResult);
@@ -804,7 +784,7 @@ TEST_F(SddDriverTestFixture, WriteWithNonHexadecimalData)
 {
 	const char* argv1[] = { "ssd.exe", "W", "5", "13234" };
 
-	ssdDriver->run(4, const_cast<char**>(argv1));
+	ssdDriver->run(sizeof(argv1) / sizeof(argv1[0]), const_cast<char**>(argv1));
 
 	string readResult = readFileAsString("ssd_output.txt");
 	EXPECT_EQ("ERROR", readResult);
@@ -814,7 +794,7 @@ TEST_F(SddDriverTestFixture, WriteWithValidHexButInvalidPattern)
 {
 	const char* argv1[] = { "ssd.exe", "W", "5", "0xf2f2f2f2" };
 
-	ssdDriver->run(4, const_cast<char**>(argv1));
+	ssdDriver->run(sizeof(argv1) / sizeof(argv1[0]), const_cast<char**>(argv1));
 
 	string readResult = readFileAsString("ssd_output.txt");
 	EXPECT_EQ("ERROR", readResult);
@@ -824,8 +804,72 @@ TEST_F(SddDriverTestFixture, WrongCommandExecution)
 {
 	const char* argv1[] = { "ssd.exe", "S" };
 
-	ssdDriver->run(2, const_cast<char**>(argv1));
+	ssdDriver->run(sizeof(argv1) / sizeof(argv1[0]), const_cast<char**>(argv1));
 
 	string readResult = readFileAsString("ssd_output.txt");
 	EXPECT_EQ("ERROR", readResult);
+}
+
+TEST_F(SddDriverTestFixture, MultipleWriteFlushTest)
+{
+	eraseAll();
+
+	const char* argv1[] = { "ssd.exe", "W", "0", "0x12345678" };
+	const char* argv2[] = { "ssd.exe", "W", "1", "0xF6F7E3A3" };
+	const char* argv3[] = { "ssd.exe", "F" };
+
+	ssdDriver->run(sizeof(argv1) / sizeof(argv1[0]), const_cast<char**>(argv1));
+	ssdDriver->run(sizeof(argv2) / sizeof(argv2[0]), const_cast<char**>(argv2));
+	ssdDriver->run(sizeof(argv3) / sizeof(argv3[0]), const_cast<char**>(argv3));
+
+	string readResult = readFileAsString("ssd_nand.txt");
+	EXPECT_EQ("0x123456780xF6F7E3A3", readResult);
+}
+
+TEST_F(SddDriverTestFixture, SingleWriteEraseFlushTest)
+{
+	eraseAll();
+
+	const char* argv1[] = { "ssd.exe", "W", "0", "0x12345678" };
+	const char* argv2[] = { "ssd.exe", "W", "1", "0xF6F7E3A3" };
+	const char* argv3[] = { "ssd.exe", "E", "0", "1"};
+	const char* argv4[] = { "ssd.exe", "F" };
+
+	ssdDriver->run(sizeof(argv1) / sizeof(argv1[0]), const_cast<char**>(argv1));
+	ssdDriver->run(sizeof(argv2) / sizeof(argv2[0]), const_cast<char**>(argv2));
+	ssdDriver->run(sizeof(argv3) / sizeof(argv3[0]), const_cast<char**>(argv3));
+	ssdDriver->run(sizeof(argv4) / sizeof(argv4[0]), const_cast<char**>(argv4));
+
+	string readResult = readFileAsString("ssd_nand.txt");
+	EXPECT_EQ("0x000000000xF6F7E3A3", readResult);
+}
+
+TEST_F(SddDriverTestFixture, ForceToFlush)
+{
+	eraseAll();
+
+	const char* argv0[] = { "ssd.exe", "W", "0", "0x12345678" };
+	const char* argv1[] = { "ssd.exe", "W", "1", "0x12345678" };
+	const char* argv2[] = { "ssd.exe", "W", "2", "0x12345678" };
+	const char* argv3[] = { "ssd.exe", "W", "3", "0x12345678" };
+	const char* argv4[] = { "ssd.exe", "W", "4", "0x12345678" };
+	const char* argv5[] = { "ssd.exe", "W", "5", "0x12345678" };
+
+	ssdDriver->run(4, const_cast<char**>(argv0));
+	ssdDriver->run(4, const_cast<char**>(argv1));
+	ssdDriver->run(4, const_cast<char**>(argv2));
+	ssdDriver->run(4, const_cast<char**>(argv3));
+	ssdDriver->run(4, const_cast<char**>(argv4));
+	ssdDriver->run(4, const_cast<char**>(argv5));
+
+	// Read All Files in Directory
+	int correctFileNamesIdx = 0;
+	vector<string> correctFileNames = { "1_W_5_0x12345678", "2_empty", "3_empty", "4_empty", "5_empty" };
+	for (const auto& entry : directory_iterator("./buffer")) {
+		if (!entry.is_regular_file()) continue;
+		ASSERT_LT(correctFileNamesIdx, correctFileNames.size());
+
+		string fileName = entry.path().filename().string();
+		EXPECT_EQ(correctFileNames[correctFileNamesIdx++], fileName);
+	}
 }
