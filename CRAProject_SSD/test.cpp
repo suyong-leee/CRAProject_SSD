@@ -30,6 +30,11 @@ public:
 		return ssdDriver->commandBufferManager.getCommand(args, buffer);
 	}
 
+	void mergeAlgorithm(vector<string> args, vector<vector<string>>& buffer)
+	{
+		return ssdDriver->mergeAlgorithm(args, buffer);
+	}
+
 	string getHex() {
 		static const char hexDigits[] = "0123456789ABCDEF";
 		string result = "0x";
@@ -404,4 +409,161 @@ TEST_F(SddDriverTestFixture, ForceToFlush)
 	ssdDriver->run(4, const_cast<char**>(argv3));
 	ssdDriver->run(4, const_cast<char**>(argv4));
 	ssdDriver->run(4, const_cast<char**>(argv5));
+}
+
+TEST_F(SddDriverTestFixture, MergeAlgorithmEraseMerged)
+{
+	vector<vector<string>> buffer = 
+	{
+		{"W", "2", "0xABABABAC"},
+		{"W", "1", "0xABABABAB"},
+		{"E", "4", "10"}
+	};
+	vector<string> args = { "E", "0", "10" };
+
+	mergeAlgorithm(args, buffer);
+
+	vector<vector<string>> expectedBuffer = 
+	{
+		{"E", "0", "10"},
+		{"E", "10", "4"}
+	};
+
+	EXPECT_EQ(expectedBuffer, buffer);
+}
+
+TEST_F(SddDriverTestFixture, MergeAlgorithmWriteMergedToErase)
+{
+	vector<vector<string>> buffer =
+	{
+		{"W", "2", "0xABABABAC"},
+		{"W", "1", "0xABABABAB"},
+	};
+	vector<string> args = { "E", "0", "10" };
+
+	mergeAlgorithm(args, buffer);
+
+	vector<vector<string>> expectedBuffer = 
+	{
+		{"E", "0", "10"}, 
+	};
+
+	EXPECT_EQ(expectedBuffer, buffer);
+}
+
+TEST_F(SddDriverTestFixture, MergeAlgorithmNoChange)
+{
+	vector<vector<string>> buffer =
+	{
+		{"W", "2", "0xABABABAC"},
+		{"W", "1", "0xABABABAB"},
+		{"E", "4", "10"}
+	};
+	vector<string> args = { "W", "10", "0x15263748" };
+
+	mergeAlgorithm(args, buffer);
+
+	vector<vector<string>> expectedBuffer =
+	{
+		{"W", "2", "0xABABABAC"},
+		{"W", "1", "0xABABABAB"},
+		{"E", "4", "10"},
+		{ "W", "10", "0x15263748" }
+	};
+
+	EXPECT_EQ(expectedBuffer, buffer);
+}
+
+TEST_F(SddDriverTestFixture, MergeAlgorithmEraseOverwritesMultipleWritesOutOfOrder)
+{
+	vector<vector<string>> buffer =
+	{
+		{"W", "1", "0xAAAAAAA1"},
+		{"W", "2", "0xAAAAAAA2"},
+		{"E", "4", "4"}
+	};
+	vector<string> args = { "E", "4", "4" };
+
+	mergeAlgorithm(args, buffer);
+
+	vector<vector<string>> expectedBuffer =
+	{
+		{"W", "1", "0xAAAAAAA1"},
+		{"W", "2", "0xAAAAAAA2"},
+		{"E", "4", "4"}
+	};
+
+	EXPECT_EQ(expectedBuffer, buffer);
+}
+
+TEST_F(SddDriverTestFixture, TC1MergeArlgorithmRange)
+{
+	vector<vector<string>> buffer =
+	{
+		{"E", "1", "3"}
+	};
+	vector<string> args = { "E", "2", "3" };
+
+	mergeAlgorithm(args, buffer);
+
+	vector<vector<string>> expectedBuffer =
+	{
+		{"E", "1", "4"}
+	};
+
+	EXPECT_EQ(expectedBuffer, buffer);
+}
+
+TEST_F(SddDriverTestFixture, TC2MergeArlgorithmRange)
+{
+	vector<vector<string>> buffer =
+	{
+		{"E", "1", "10"}
+	};
+	vector<string> args = { "E", "2", "2" };
+
+	mergeAlgorithm(args, buffer);
+
+	vector<vector<string>> expectedBuffer =
+	{
+		{"E", "1", "10"}
+	};
+
+	EXPECT_EQ(expectedBuffer, buffer);
+}
+
+TEST_F(SddDriverTestFixture, TC3MergeArlgorithmRange)
+{
+	vector<vector<string>> buffer =
+	{
+		{"E", "4", "5"}
+	};
+	vector<string> args = { "E", "2", "5" };
+
+	mergeAlgorithm(args, buffer);
+
+	vector<vector<string>> expectedBuffer =
+	{
+		{"E", "2", "7"}
+	};
+
+	EXPECT_EQ(expectedBuffer, buffer);
+}
+
+TEST_F(SddDriverTestFixture, TC4MergeArlgorithmRange)
+{
+	vector<vector<string>> buffer =
+	{
+		{"E", "2", "3"}
+	};
+	vector<string> args = { "E", "1", "10" };
+
+	mergeAlgorithm(args, buffer);
+
+	vector<vector<string>> expectedBuffer =
+	{
+		{"E", "1", "10"}
+	};
+
+	EXPECT_EQ(expectedBuffer, buffer);
 }
