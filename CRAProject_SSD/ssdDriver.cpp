@@ -180,8 +180,7 @@ public:
             if (buffer.size() == 5) {
                 //flush
                 unique_ptr<Command> flushCmd = make_unique<FlushCommand>(ctx, buffer);
-                flushCmd->execute();
-                commandBufferManager.eraseAll();
+                cmd = make_unique<FlushCommand>(ctx, buffer);
                 vector<vector<string>> buffer1 = { { command,args[1],args[2] } };
                 commandBufferManager.writeCommandBuffer(buffer1);
             }
