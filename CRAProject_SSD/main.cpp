@@ -1,8 +1,8 @@
 #include "gmock/gmock.h"
 #include "ssdDriver.cpp"
-#define __DEBUG__ (1)
 
-#if (__DEBUG__ == 1)
+
+#if defined(_DEBUG)
 int main()
 {
 	testing::InitGoogleMock();
