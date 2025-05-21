@@ -247,13 +247,16 @@ private:
             buffer.push_back({ command,args[1],args[2] });
         }
         else if (command == "E") {
-            for (int i = bufferCount - 1; i >= 0; i--) {
+            for (int i = 0; i < bufferCount; i++) {
                 if (buffer[i][0] == "W") {
                     if ((stoi(buffer[i][1]) >= stoi(args[1])) && (stoi(buffer[i][1]) < (stoi(args[1]) + stoi(args[2])))) {
                         buffer.erase(buffer.begin() + i);
+                        bufferCount--;
+                        i--;
                     }
                 }
             }
+            bufferCount = buffer.size();
             int newStart = stoi(args[1]);
             int newEnd = stoi(args[1]) + stoi(args[2]) - 1;
             for (int i = bufferCount - 1; i >= 0; i--) {
@@ -261,9 +264,6 @@ private:
                     int targetStart = stoi(buffer[i][1]);
                     int targetEnd = stoi(buffer[i][1]) + stoi(buffer[i][2]) - 1;
 
-                    if (targetEnd - targetStart + 1 == 10) {
-                        continue;
-                    }
                     if ((targetStart <= newStart) && (targetEnd <= newEnd)) {
                         targetEnd = newEnd;
                         bool merged = mergeBuffer(targetStart, targetEnd, newStart, newEnd, buffer[i]);
