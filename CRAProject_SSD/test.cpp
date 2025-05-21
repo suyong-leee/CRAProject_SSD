@@ -686,7 +686,7 @@ TEST_F(SddDriverTestFixture, MergeAlgorithmWriteNoOverlap)
 	EXPECT_EQ(expectedBuffer, buffer);
 }
 
-TEST_F(SddDriverTestFixture, TC1ValidTest)
+TEST_F(SddDriverTestFixture, EraseWithInvalidStartBlock)
 {
 	const char* argv1[] = { "ssd.exe", "E", "-1", "9" };
 
@@ -696,7 +696,7 @@ TEST_F(SddDriverTestFixture, TC1ValidTest)
 	EXPECT_EQ("ERROR", readResult);
 }
 
-TEST_F(SddDriverTestFixture, TC2ValidTest)
+TEST_F(SddDriverTestFixture, EraseWithStartBlockOutOfRange)
 {
 	const char* argv1[] = { "ssd.exe", "E", "101", "9" };
 
@@ -706,7 +706,7 @@ TEST_F(SddDriverTestFixture, TC2ValidTest)
 	EXPECT_EQ("ERROR", readResult);
 }
 
-TEST_F(SddDriverTestFixture, TC3ValidTest)
+TEST_F(SddDriverTestFixture, EraseWithInvalidBlockRange)
 {
 	const char* argv1[] = { "ssd.exe", "E", "99", "9" };
 
@@ -716,7 +716,7 @@ TEST_F(SddDriverTestFixture, TC3ValidTest)
 	EXPECT_EQ("ERROR", readResult);
 }
 
-TEST_F(SddDriverTestFixture, TC4ValidTest)
+TEST_F(SddDriverTestFixture, EraseWithBlockRangeExceedingLimit)
 {
 	const char* argv1[] = { "ssd.exe", "E", "5", "11" };
 
@@ -726,7 +726,7 @@ TEST_F(SddDriverTestFixture, TC4ValidTest)
 	EXPECT_EQ("ERROR", readResult);
 }
 
-TEST_F(SddDriverTestFixture, TC5ValidTest)
+TEST_F(SddDriverTestFixture, EraseWithNegativeBlockCount)
 {
 	const char* argv1[] = { "ssd.exe", "E", "5", "-1" };
 
@@ -736,12 +736,12 @@ TEST_F(SddDriverTestFixture, TC5ValidTest)
 	EXPECT_EQ("ERROR", readResult);
 }
 
-TEST_F(SddDriverTestFixture, TC6ValidTest)
+TEST_F(SddDriverTestFixture, EraseAndFlushWithValidInput)
 {
 	eraseAll();
 
 	const char* argv1[] = { "ssd.exe", "E", "0", "0" };
-	const char* argv2[] = { "ssd.exe", "F"};
+	const char* argv2[] = { "ssd.exe", "F" };
 
 	ssdDriver->run(4, const_cast<char**>(argv1));
 	ssdDriver->run(2, const_cast<char**>(argv2));
@@ -750,9 +750,9 @@ TEST_F(SddDriverTestFixture, TC6ValidTest)
 	EXPECT_EQ("", readResult);
 }
 
-TEST_F(SddDriverTestFixture, TC7ValidTest)
+TEST_F(SddDriverTestFixture, ReadWithNegativePageNumber)
 {
-	const char* argv1[] = { "ssd.exe", "R", "-1"};
+	const char* argv1[] = { "ssd.exe", "R", "-1" };
 
 	ssdDriver->run(3, const_cast<char**>(argv1));
 
@@ -760,7 +760,7 @@ TEST_F(SddDriverTestFixture, TC7ValidTest)
 	EXPECT_EQ("ERROR", readResult);
 }
 
-TEST_F(SddDriverTestFixture, TC8ValidTest)
+TEST_F(SddDriverTestFixture, ReadWithPageNumberOutOfRange)
 {
 	const char* argv1[] = { "ssd.exe", "R", "100" };
 
@@ -770,9 +770,9 @@ TEST_F(SddDriverTestFixture, TC8ValidTest)
 	EXPECT_EQ("ERROR", readResult);
 }
 
-TEST_F(SddDriverTestFixture, TC9ValidTest)
+TEST_F(SddDriverTestFixture, WriteWithNegativePageNumber)
 {
-	const char* argv1[] = { "ssd.exe", "W", "-1", "0x12345678"};
+	const char* argv1[] = { "ssd.exe", "W", "-1", "0x12345678" };
 
 	ssdDriver->run(4, const_cast<char**>(argv1));
 
@@ -780,7 +780,7 @@ TEST_F(SddDriverTestFixture, TC9ValidTest)
 	EXPECT_EQ("ERROR", readResult);
 }
 
-TEST_F(SddDriverTestFixture, TC10ValidTest)
+TEST_F(SddDriverTestFixture, WriteWithPageNumberOutOfRange)
 {
 	const char* argv1[] = { "ssd.exe", "W", "100", "0x12345678" };
 
@@ -790,7 +790,7 @@ TEST_F(SddDriverTestFixture, TC10ValidTest)
 	EXPECT_EQ("ERROR", readResult);
 }
 
-TEST_F(SddDriverTestFixture, TC11ValidTest)
+TEST_F(SddDriverTestFixture, WriteWithInvalidHexCharacters)
 {
 	const char* argv1[] = { "ssd.exe", "W", "5", "0xZf1" };
 
@@ -800,7 +800,7 @@ TEST_F(SddDriverTestFixture, TC11ValidTest)
 	EXPECT_EQ("ERROR", readResult);
 }
 
-TEST_F(SddDriverTestFixture, TC12ValidTest)
+TEST_F(SddDriverTestFixture, WriteWithNonHexadecimalData)
 {
 	const char* argv1[] = { "ssd.exe", "W", "5", "13234" };
 
@@ -810,7 +810,7 @@ TEST_F(SddDriverTestFixture, TC12ValidTest)
 	EXPECT_EQ("ERROR", readResult);
 }
 
-TEST_F(SddDriverTestFixture, TC13ValidTest)
+TEST_F(SddDriverTestFixture, WriteWithValidHexButInvalidPattern)
 {
 	const char* argv1[] = { "ssd.exe", "W", "5", "0xf2f2f2f2" };
 
@@ -820,9 +820,9 @@ TEST_F(SddDriverTestFixture, TC13ValidTest)
 	EXPECT_EQ("ERROR", readResult);
 }
 
-TEST_F(SddDriverTestFixture, TC14ValidTest)
+TEST_F(SddDriverTestFixture, WrongCommandExecution)
 {
-	const char* argv1[] = { "ssd.exe", "S"};
+	const char* argv1[] = { "ssd.exe", "S" };
 
 	ssdDriver->run(2, const_cast<char**>(argv1));
 
