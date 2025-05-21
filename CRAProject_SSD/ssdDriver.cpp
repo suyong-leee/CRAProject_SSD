@@ -169,12 +169,8 @@ public:
 
         unique_ptr<Command> cmd;
 
-        //erase 가드절 생성
-        if (command == "E" && args[2] == "0")
-        {
-            return;
-        }
 
+        if (isValid(args) == false) return;
 
         if (command == "W" || command == "E") {
             cmd = make_unique<NoopCommand>();
@@ -200,7 +196,12 @@ public:
         }
         else if (command == "R") {
             string value = commandBufferManager.getCommand(args, buffer);
-            cmd = value.empty() ? make_unique<ReadCommand>(ctx, stoi(args[1])) : make_unique<FastReadCommand>(ctx, value);
+            if (value == "") {
+                cmd = make_unique<ReadCommand>(ctx, stoi(args[1]));
+            }
+            else {
+                cmd = make_unique<FastReadCommand>(ctx, value);
+            }
         }
         else if (command == "F") {
             cmd = make_unique<FlushCommand>(ctx, buffer);
@@ -263,20 +264,25 @@ private:
                     }
                     if ((targetStart <= newStart) && (targetEnd <= newEnd)) {
                         targetEnd = newEnd;
+                        bool merged = mergeBuffer(targetStart, targetEnd, newStart, newEnd, buffer[i]);
+                        if (merged) break;
                     }
                     else if ((targetStart >= newStart) && (targetEnd <= newEnd)) {
                         targetStart = newStart;
                         targetEnd = newEnd;
+                        bool merged = mergeBuffer(targetStart, targetEnd, newStart, newEnd, buffer[i]);
+                        if (merged) break;
                     }
                     else if ((targetStart <= newStart) && (targetEnd >= newEnd)) {
                         targetEnd = newEnd;
+                        bool merged = mergeBuffer(targetStart, targetEnd, newStart, newEnd, buffer[i]);
+                        if (merged) break;
                     }
                     else if ((targetStart >= newStart) && (targetEnd >= newEnd)) {
                         targetStart = newStart;
+                        bool merged = mergeBuffer(targetStart, targetEnd, newStart, newEnd, buffer[i]);
+                        if (merged) break;
                     }
-
-                    bool merged = mergeBuffer(targetStart, targetEnd, newStart, newEnd, buffer[i]);
-                    if (merged) break;
                 }
             }
             if (newStart != -1) {
@@ -302,6 +308,34 @@ private:
             newStart = -1;
             return true;
         }
+    }
+
+    bool isValid(vector<string> args)
+    {
+        string command = args[0];
+        
+        if (command == "W")
+        {
+            int addr = stoi(args[1]);
+            string value = args[2];
+            const string valid = "0123456789ABCDEF";
+            if (addr < 0 || addr >= 100) return false;
+            if (value.find("0x") != 0 || value.size() != 10) return false;
+
+            for (int i = 2; i < 10; ++i) {
+                if (valid.find(value[i]) == string::npos) return false;
+            }
+        }
+        else if (command == "E") {
+            int addr = stoi(args[1]);
+            int value = stoi(args[2]);
+
+            if (addr < 0 || addr >= 100) return false;
+            if (addr + value < 0 || addr + value >= 100) return false;
+            if (value == 0) return false;
+        }
+
+        return true;
     }
 
     friend class SddDriverTestFixture;
