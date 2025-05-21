@@ -180,20 +180,19 @@ public:
             if (buffer.size() == 5) {
                 //flush
                 unique_ptr<Command> flushCmd = make_unique<FlushCommand>(ctx, buffer);
-                flushCmd->execute();
-                commandBufferManager.eraseAll();
-                buffer.clear();
-
-                //regist
-                buffer.push_back({ command,args[1],args[2] });
+                cmd = make_unique<FlushCommand>(ctx, buffer);
+                vector<vector<string>> buffer1 = { { command,args[1],args[2] } };
+                commandBufferManager.writeCommandBuffer(buffer1);
             }
             else if (buffer.size() == 0) {
                 //regist
                 buffer.push_back({ command,args[1],args[2] });
+                commandBufferManager.writeCommandBuffer(buffer);
             }
             else
             {
                 mergeAlgorithm(args, buffer);
+                commandBufferManager.writeCommandBuffer(buffer);
             }
             //end commonbuffer control
         }
@@ -208,18 +207,14 @@ public:
         }
         else if (command == "F") {
             cmd = make_unique<FlushCommand>(ctx, buffer);
+            commandBufferManager.eraseAll();
         }
         else {
             return ctx.handleError();
         }
 
-        commandBufferManager.writeCommandBuffer(buffer);
-
         cmd->execute();
 
-        if (command == "F") {
-            commandBufferManager.eraseAll();
-        }
     }
 
 private:
@@ -232,6 +227,11 @@ private:
             args.emplace_back(argv[i]);
         }
         return args;
+    }
+
+    void processWE()
+    {
+
     }
 
     void mergeAlgorithm(vector<string> args, vector<vector<string>>& buffer)
