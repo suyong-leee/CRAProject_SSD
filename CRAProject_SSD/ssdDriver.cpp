@@ -166,6 +166,7 @@ public:
 
         try {
             if (command == "W" || command == "E") {
+                cmd = make_unique<NoopCommand>();
                 //commonbuffer control
                 int bufferCount = buffer.size();
                 if (bufferCount == 5) {
@@ -294,9 +295,6 @@ public:
                 if (fastRead(args, buffer) == false) {
                     cmd = make_unique<ReadCommand>(ctx, addr);
                 }
-            }
-            else if (command == "F") { // temp code
-                cmd = make_unique<FlushCommand>(ctx, buffer);
             }
             else if (command == "F") {
                 cmd = make_unique<FlushCommand>(ctx, buffer);
