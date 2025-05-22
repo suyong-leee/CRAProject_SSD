@@ -252,7 +252,7 @@ private:
 
             vector<string> checkFiles;
             for (const auto& entry : directory_iterator(p)) {
-                if (entry.is_directory()) {
+                if (entry.is_regular_file()) {
                     checkFiles.push_back(entry.path().filename().string());
                 }
             }
