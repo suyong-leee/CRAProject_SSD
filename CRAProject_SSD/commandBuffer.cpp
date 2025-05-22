@@ -157,7 +157,7 @@ public:
                     int targetStart = stoi(buffer[i][1]);
                     int targetEnd = stoi(buffer[i][1]) + stoi(buffer[i][2]) - 1;
 
-                    if ((targetStart <= newStart) && (targetEnd <= newEnd) && (newStart <= targetEnd)) {
+                    if ((targetStart <= newStart) && (targetEnd <= newEnd) && (newStart <= targetEnd + 1)) {
                         targetEnd = newEnd;
                         bool merged = mergeBuffer(targetStart, targetEnd, newStart, newEnd, buffer[i]);
                         if (merged) break;
@@ -172,7 +172,7 @@ public:
                         bool merged = mergeBuffer(targetStart, targetEnd, newStart, newEnd, buffer[i]);
                         if (merged) break;
                     }
-                    else if ((targetStart >= newStart) && (targetEnd >= newEnd) && (targetStart <= newEnd)) {
+                    else if ((targetStart >= newStart) && (targetEnd >= newEnd) && (targetStart <= newEnd + 1)) {
                         targetStart = newStart;
                         bool merged = mergeBuffer(targetStart, targetEnd, newStart, newEnd, buffer[i]);
                         if (merged) break;
@@ -252,7 +252,7 @@ private:
 
             vector<string> checkFiles;
             for (const auto& entry : directory_iterator(p)) {
-                if (entry.is_directory()) {
+                if (entry.is_regular_file()) {
                     checkFiles.push_back(entry.path().filename().string());
                 }
             }
