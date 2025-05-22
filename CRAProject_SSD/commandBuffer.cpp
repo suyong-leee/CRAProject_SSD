@@ -157,7 +157,7 @@ public:
                     int targetStart = stoi(buffer[i][1]);
                     int targetEnd = stoi(buffer[i][1]) + stoi(buffer[i][2]) - 1;
 
-                    if ((targetStart <= newStart) && (targetEnd <= newEnd)) {
+                    if ((targetStart <= newStart) && (targetEnd <= newEnd) && (newStart <= targetEnd)) {
                         targetEnd = newEnd;
                         bool merged = mergeBuffer(targetStart, targetEnd, newStart, newEnd, buffer[i]);
                         if (merged) break;
@@ -172,7 +172,7 @@ public:
                         bool merged = mergeBuffer(targetStart, targetEnd, newStart, newEnd, buffer[i]);
                         if (merged) break;
                     }
-                    else if ((targetStart >= newStart) && (targetEnd >= newEnd)) {
+                    else if ((targetStart >= newStart) && (targetEnd >= newEnd) && (targetStart <= newEnd)) {
                         targetStart = newStart;
                         bool merged = mergeBuffer(targetStart, targetEnd, newStart, newEnd, buffer[i]);
                         if (merged) break;
